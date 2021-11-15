@@ -5,37 +5,46 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <ctype.h>
+#include <limits.h>
 
-/** 
- * program ::= program identifier begin [decl-list] stmt-list end "."
- * decl-list ::= decl ";" { decl ";"}
- * decl ::= ident-list is type
- * ident-list ::= identifier {"," identifier}
- * type ::= int | float | char
- * stmt-list ::= stmt {";" stmt}
- * stmt ::= assign-stmt | if-stmt | while-stmt | repeat-stmt
- *  | read-stmt | write-stmt
- * assign-stmt ::= identifier "=" simple_expr
- * if-stmt ::= if condition then stmt-list end
- *  | if condition then stmt-list else stmt-list end
- * condition ::= expression
- * repeat-stmt ::= repeat stmt-list stmt-suffix
- * stmt-suffix ::= until condition
- * while-stmt ::= stmt-prefix stmt-list end
- * stmt-prefix ::= while condition do
- * read-stmt ::= read "(" identifier ")"
- * write-stmt ::= write "(" writable ")"
- * writable ::= simple-expr | literal
- * expression ::= simple-expr | simple-expr relop simple-expr
- * simple-expr ::= term | simple-expr addop term
- * term ::= factor-a | term mulop factor-a
- * fator-a ::= factor | ! factor | "-" factor
- * factor ::= identifier | constant | "(" expression ")"
- * relop ::= "==" | ">" | ">=" | "<" | "<=" | "!="
- * addop ::= "+" | "-" | ||
- * mulop ::= "*" | "/" | &&
- * constant ::= integer_const | float_const | char_const
- * **/
+#define TOKEN_PROGRAM 1
+#define TOKEN_NUMBER 3
+#define TOKEN_IF 4
+#define TOKEN_THEN 5
+#define TOKEN_END 6
+#define TOKEN_ELSE 7
+#define TOKEN_REPEAT 8
+#define TOKEN_UNTIL 9
+#define TOKEN_WHILE 10
+#define TOKEN_DO 11
+#define TOKEN_READ 12
+#define TOKEN_WRITE 13
+#define TOKEN_AND 14
+#define TOKEN_OR 15
+#define TOKEN_EQUALS 'e'
+#define TOKEN_GREATER '>'
+#define TOKEN_GREATER_THAN_EQUALS 'g'
+#define TOKEN_LESSER '<'
+#define TOKEN_LESSER_THAN_EQUALS 'l'
+#define TOKEN_DIFFERENT '!'
+#define TOKEN_FLOAT 26
+#define TOKEN_INTEGER 27
+#define TOKEN_CHARACTER 28
+#define TOKEN_LITERAL 29
+#define TOKEN_IDENTIFIER 30
+#define TOKEN_IS 31
+#define TOKEN_BEGIN 32
+#define TOKEN_COMMENT 33
+#define TOKEN_SUM '+'
+#define TOKEN_MINUS '-'
+#define TOKEN_MULTIPLY '*'
+#define TOKEN_QUOTIENT '/'
+#define TOKEN_ASSIGN '='
+#define TOKEN_SEMICOLON ';'
+#define TOKEN_COMMA ','
+#define TOKEN_LPAREN '('
+#define TOKEN_RPAREN ')'
 
 static char *raw, *token;
 static int type;
@@ -81,19 +90,108 @@ static void readin(char **file)
     (void)close(fd);
 }
 
+static int
+ident(void)
+{
+    char *p;
+    size_t i, len;
+
+    p = raw;
+    while (isalnum(*raw) || *raw == '_')
+        ++raw;
+
+    len = raw - p;
+
+    --raw;
+
+    free(token);
+
+    if ((token = malloc(len + 1)) == NULL)
+        error("malloc failed");
+
+    for (i = 0; i < len; i++)
+        token[i] = *p++;
+    token[i] = '\0';
+
+    if (!strcmp(token, "float"))
+        return TOKEN_FLOAT;
+    else if (!strcmp(token, "int"))
+        return TOKEN_INTEGER;
+    else if (!strcmp(token, "char"))
+        return TOKEN_CHARACTER;
+    else if (!strcmp(token, "program"))
+        return TOKEN_PROGRAM;
+    else if (!strcmp(token, "begin"))
+        return TOKEN_BEGIN;
+    else if (!strcmp(token, "end"))
+        return TOKEN_END;
+    else if (!strcmp(token, "if"))
+        return TOKEN_IF;
+    else if (!strcmp(token, "then"))
+        return TOKEN_THEN;
+    else if (!strcmp(token, "while"))
+        return TOKEN_WHILE;
+    else if (!strcmp(token, "do"))
+        return TOKEN_DO;
+    else if (!strcmp(token, "else"))
+        return TOKEN_ELSE;
+    else if (!strcmp(token, "repeat"))
+        return TOKEN_REPEAT;
+    else if (!strcmp(token, "until"))
+        return TOKEN_UNTIL;
+    else if (!strcmp(token, "read"))
+        return TOKEN_READ;
+    else if (!strcmp(token, "write"))
+        return TOKEN_WRITE;
+
+    return TOKEN_IDENTIFIER;
+}
+
+//todo: Change to static typing
+static int number(void)
+{
+    const char *errstr;
+    char *p;
+    size_t i, j = 0, len;
+    p = raw;
+    while (isdigit(*raw) || (*raw) == '.')
+    {
+        ++raw;
+    }
+    len = raw - p;
+
+    --raw;
+
+    free(token);
+
+    if ((token = malloc(len + 1)) == NULL)
+        error("malloc failed");
+
+    for (i = 0; i < len; i++)
+    {
+        if (isdigit(*p))
+            token[j++] = *p;
+        ++p;
+    }
+    token[j] = '\0';
+
+    (void)strtonum(token, 0, LONG_MAX, &errstr);
+    if (errstr != NULL)
+        error("invalid number: %s", token);
+
+    return TOKEN_NUMBER;
+}
+
 /**
  * Lexer
  */
-// TODO: Remover comentarios
-static void comment(void)
+static int comment(void)
 {
     int ch;
     if ((ch = *raw++) == '/')
     {
-        fputs("Comment /\n", stdout);
         if ((ch = *raw++) == '*')
         {
-            fputs("Comment *\n", stdout);
             while ((ch = *raw++))
             {
                 if (ch == '\0')
@@ -108,16 +206,42 @@ static void comment(void)
                 if (ch == '*')
                 {
                     ch = *raw++;
-                    fputs("Comment *\n", stdout);
                     if (ch == '/')
                     {
-                        fputs("Comment /\n", stdout);
-                        break;
+                        return TOKEN_COMMENT;
                     }
                 }
             }
         }
+        return TOKEN_QUOTIENT;
     }
+}
+
+static int literal(void)
+{
+   char *p;
+    size_t i, len;
+
+    p = ++raw;
+    while (isalnum(*raw) || *raw == '}')
+        ++raw;
+
+    len = raw - p;
+
+    --raw;
+
+    free(token);
+
+    if ((token = malloc(len + 1)) == NULL)
+        error("malloc failed");
+
+    for (i = 0; i < len; i++)
+        token[i] = *p++;
+    token[i] = '\0';
+
+    while(*raw != '}')
+        ++raw;
+    return TOKEN_LITERAL;
 }
 
 static int lex(void)
@@ -130,12 +254,46 @@ again:
             ++line;
         }
     }
+
+    if (isalpha(*raw))
+    {
+        return ident();
+    }
+    if (isdigit(*raw))
+    {
+        return number();
+    }
+
     switch (*raw)
     {
+    case '{':
+        return literal();
     case '/':
-        comment();
-        goto again;
+        if(comment() == TOKEN_COMMENT)
+            goto again;
+        return TOKEN_QUOTIENT;
+    case '=':
+        return TOKEN_ASSIGN;
+    case ',':
+        return TOKEN_COMMA;
+    case ';':
+        return TOKEN_SEMICOLON;
+    case '>':
+        return TOKEN_GREATER;
+    case '<':
+        return TOKEN_LESSER;
+    case '+':
+        return TOKEN_SUM;
+    case '-':
+        return TOKEN_MINUS;
+    case '*':
+        return TOKEN_MULTIPLY;
+    case '(':
+        return TOKEN_LPAREN;
+    case ')':
+        return TOKEN_RPAREN;
     }
+    return 0;
 }
 
 static void parser(void)
@@ -143,7 +301,41 @@ static void parser(void)
     while ((type = lex()) != 0)
     {
         ++raw;
-        (void)fprintf(stdout, "%lu|%d\t", line, type);
+        (void)fprintf(stdout, "Table %lu|%d\t", line, type);
+        switch (type)
+        {
+        case TOKEN_LITERAL:
+        case TOKEN_INTEGER:
+        case TOKEN_PROGRAM:
+        case TOKEN_FLOAT:
+        case TOKEN_READ:
+        case TOKEN_WRITE:
+        case TOKEN_END:
+        case TOKEN_IF:
+        case TOKEN_THEN:
+        case TOKEN_ELSE:
+        case TOKEN_IDENTIFIER:
+        case TOKEN_BEGIN:
+        case TOKEN_NUMBER:
+            (void)fprintf(stdout, "%s\n", token);
+            break;
+        case TOKEN_QUOTIENT:
+        case TOKEN_ASSIGN:
+        case TOKEN_SEMICOLON:
+        case TOKEN_COMMA:
+        case TOKEN_MULTIPLY:
+        case TOKEN_SUM:
+        case TOKEN_MINUS:
+        case TOKEN_LESSER:
+        case TOKEN_LESSER_THAN_EQUALS:
+        case TOKEN_GREATER:
+        case TOKEN_GREATER_THAN_EQUALS:
+        case TOKEN_DIFFERENT:
+        case TOKEN_LPAREN:
+        case TOKEN_RPAREN:
+            (void)fprintf(stdout, "%c\n", type);
+            break;
+        }
     }
     (void)fputc('\n', stdout);
 }
