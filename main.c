@@ -7,35 +7,37 @@
 #include <fcntl.h>
 #include <ctype.h>
 #include <limits.h>
+#include "hashtable.h"
 
 #define TOKEN_PROGRAM 1
-#define TOKEN_NUMBER 3
-#define TOKEN_IF 4
-#define TOKEN_THEN 5
-#define TOKEN_END 6
-#define TOKEN_ELSE 7
-#define TOKEN_REPEAT 8
-#define TOKEN_UNTIL 9
-#define TOKEN_WHILE 10
-#define TOKEN_DO 11
-#define TOKEN_READ 12
-#define TOKEN_WRITE 13
-#define TOKEN_AND 14
-#define TOKEN_OR 15
+#define TOKEN_IF 2
+#define TOKEN_THEN 3 
+#define TOKEN_END 4
+#define TOKEN_ELSE 5
+#define TOKEN_REPEAT 6
+#define TOKEN_UNTIL 7
+#define TOKEN_WHILE 8
+#define TOKEN_DO 9
+#define TOKEN_READ 10
+#define TOKEN_WRITE 11
+#define TOKEN_IN 12
+#define TOKEN_FLOAT 13
+#define TOKEN_INTEGER 14
+#define TOKEN_CHARACTER 15
+#define TOKEN_LITERAL 16
+#define TOKEN_IDENTIFIER 17
+#define TOKEN_IS 18
+#define TOKEN_BEGIN 19
+#define TOKEN_COMMENT 20
+#define TOKEN_NUMBER 21
+#define TOKEN_AND 'a'
+#define TOKEN_OR 'o'
 #define TOKEN_EQUALS 'e'
 #define TOKEN_GREATER '>'
 #define TOKEN_GREATER_THAN_EQUALS 'g'
 #define TOKEN_LESSER '<'
 #define TOKEN_LESSER_THAN_EQUALS 'l'
 #define TOKEN_DIFFERENT '!'
-#define TOKEN_FLOAT 26
-#define TOKEN_INTEGER 27
-#define TOKEN_CHARACTER 28
-#define TOKEN_LITERAL 29
-#define TOKEN_IDENTIFIER 30
-#define TOKEN_IS 31
-#define TOKEN_BEGIN 32
-#define TOKEN_COMMENT 33
 #define TOKEN_SUM '+'
 #define TOKEN_MINUS '-'
 #define TOKEN_MULTIPLY '*'
@@ -45,11 +47,11 @@
 #define TOKEN_COMMA ','
 #define TOKEN_LPAREN '('
 #define TOKEN_RPAREN ')'
+#define TOKEN_NEGATIVE '!'
 
 static char *raw, *token;
 static int type;
 static size_t line = 1;
-
 /** Functions **/
 static void error(const char *fmt, ...)
 {
@@ -143,6 +145,8 @@ ident(void)
         return TOKEN_READ;
     else if (!strcmp(token, "write"))
         return TOKEN_WRITE;
+    else if (!strcmp(token, "is"))
+        return TOKEN_IS;
 
     return TOKEN_IDENTIFIER;
 }
@@ -219,7 +223,7 @@ static int comment(void)
 
 static int literal(void)
 {
-   char *p;
+    char *p;
     size_t i, len;
 
     p = ++raw;
@@ -239,7 +243,7 @@ static int literal(void)
         token[i] = *p++;
     token[i] = '\0';
 
-    while(*raw != '}')
+    while (*raw != '}')
         ++raw;
     return TOKEN_LITERAL;
 }
@@ -269,7 +273,7 @@ again:
     case '{':
         return literal();
     case '/':
-        if(comment() == TOKEN_COMMENT)
+        if (comment() == TOKEN_COMMENT)
             goto again;
         return TOKEN_QUOTIENT;
     case '=':
@@ -292,18 +296,23 @@ again:
         return TOKEN_LPAREN;
     case ')':
         return TOKEN_RPAREN;
+    case '!':
+        return TOKEN_NEGATIVE;
     }
     return 0;
 }
 
-static void parser(void)
+static void parser(HashTable* ht)
 {
     while ((type = lex()) != 0)
     {
         ++raw;
-        (void)fprintf(stdout, "Table %lu|%d\t", line, type);
+        // (void)fprintf(stdout, "Table %lu|%d\t", line, type);
         switch (type)
         {
+        case TOKEN_IDENTIFIER:
+            ht_insert(ht, token, TOKEN_IDENTIFIER);
+            break;
         case TOKEN_LITERAL:
         case TOKEN_INTEGER:
         case TOKEN_PROGRAM:
@@ -314,11 +323,10 @@ static void parser(void)
         case TOKEN_IF:
         case TOKEN_THEN:
         case TOKEN_ELSE:
-        case TOKEN_IDENTIFIER:
         case TOKEN_BEGIN:
         case TOKEN_NUMBER:
-            (void)fprintf(stdout, "%s\n", token);
-            break;
+        case TOKEN_IS:
+            // (void)fprintf(stdout, "%s\n", token);
         case TOKEN_QUOTIENT:
         case TOKEN_ASSIGN:
         case TOKEN_SEMICOLON:
@@ -333,11 +341,30 @@ static void parser(void)
         case TOKEN_DIFFERENT:
         case TOKEN_LPAREN:
         case TOKEN_RPAREN:
-            (void)fprintf(stdout, "%c\n", type);
+            // (void)fprintf(stdout, "%c\n", type);
             break;
         }
     }
     (void)fputc('\n', stdout);
+}
+
+static words(HashTable* ht) {
+    ht_insert(ht, "program", TOKEN_PROGRAM);
+    ht_insert(ht, "begin", TOKEN_BEGIN);
+    ht_insert(ht, "end", TOKEN_END);
+    ht_insert(ht, "is", TOKEN_IS);
+    ht_insert(ht, "int", TOKEN_INTEGER);
+    ht_insert(ht, "float", TOKEN_FLOAT);
+    ht_insert(ht, "char", TOKEN_CHARACTER);
+    ht_insert(ht, "if", TOKEN_IF);
+    ht_insert(ht, "then", TOKEN_THEN);
+    ht_insert(ht, "else", TOKEN_ELSE);
+    ht_insert(ht, "repeat", TOKEN_REPEAT);
+    ht_insert(ht, "until", TOKEN_UNTIL);
+    ht_insert(ht, "while", TOKEN_WHILE);
+    ht_insert(ht, "do", TOKEN_DO);
+    ht_insert(ht, "read", TOKEN_READ);
+    ht_insert(ht, "write", TOKEN_WRITE);
 }
 
 int main(int argc, char *argv[])
@@ -348,10 +375,14 @@ int main(int argc, char *argv[])
         fputs("execution: main *.lamp file\n", stderr);
         exit(1);
     }
+    HashTable *ht = ht_create(3);
+    words(ht);
     readin(argv[1]);
 
     startp = raw;
-    parser();
+    parser(ht);
     free(startp);
+    ht_print(ht);
+    ht_free(ht);
     return 0;
 }
