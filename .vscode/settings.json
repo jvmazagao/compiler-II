@@ -1,7 +1,13 @@
 {
     "files.associations": {
         "stdio.h": "c",
-        "limits.h": "c"
+        "limits.h": "c",
+        "array": "c",
+        "istream": "c",
+        "ostream": "c",
+        "tuple": "c",
+        "type_traits": "c",
+        "utility": "c"
     },
     "C_Cpp.errorSquiggles": "Disabled"
 }

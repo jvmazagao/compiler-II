@@ -1,0 +1,9 @@
+<toolSet name="External Tools">
+  <tool name="debug" showInMainMenu="false" showInEditor="false" showInProject="false" showInSearchPopup="false" disabled="false" useConsole="true" showConsoleOnStdOut="false" showConsoleOnStdErr="false" synchronizeAfterRun="true">
+    <exec>
+      <option name="COMMAND" value="make all &amp;&amp; ./main " />
+      <option name="PARAMETERS" value="tests/test4.lamp" />
+      <option name="WORKING_DIRECTORY" value="$USER_HOME$/compiler/compiler-II" />
+    </exec>
+  </tool>
+</toolSet>

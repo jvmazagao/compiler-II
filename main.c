@@ -8,6 +8,7 @@
 #include <ctype.h>
 #include <limits.h>
 #include "hashtable.h"
+#include <regex.h>
 
 #define TOKEN_PROGRAM 1
 #define TOKEN_IF 2
@@ -65,8 +66,11 @@ static void error(const char *fmt, ...) {
     exit(1);
 }
 
-static void readin(char **file)
-{
+static void debug(char *value) {
+    (void) fputs(value, stdout);
+}
+
+static void readin(char **file) {
     int fd;
     struct stat st;
 
@@ -90,7 +94,7 @@ static void readin(char **file)
 
     raw[st.st_size] = '\0';
 
-    (void)close(fd);
+    (void) close(fd);
 }
 
 static int ident(void) {
@@ -155,8 +159,7 @@ static int number(void)
     char *p;
     size_t i, j = 0, len;
     p = raw;
-    while (isdigit(*raw) || (*raw) == '.')
-    {
+    while (isdigit(*raw) || (*raw) == '.') {
         ++raw;
     }
     len = raw - p;
@@ -210,8 +213,7 @@ static int comment(void) {
     }
 }
 
-static int literal(void)
-{
+static int literal(void) {
     char *p;
     size_t i, len;
 
@@ -234,7 +236,6 @@ static int literal(void)
 
     while (*raw != '}')
         ++raw;
-
     return TOKEN_LITERAL;
 }
 
@@ -308,85 +309,392 @@ static int lex(void) {
             if(strlen(raw) == 0)
                 return 0;
             // (void) fprintf(stdout, "DEFAULTS %i\n", strlen(raw));
-            // error("MALFORMATED RAW STRING");
+            error("MALFORMATED RAW STRING");
     }
 }
 
-static void parser(HashTable *ht)
-{
-    while ((type = lex()) != 0)
-    {
-        ++raw;
-        (void)fprintf(stdout, "Token: %s - Type: %i\n", token, type);
-        switch (type)
-        {
+static void next(void) {
+    type = lex();
+    raw++;
+}
+
+static void expect(int match) {
+    if (match != type) {
+        (void) fprintf(stdout, "type: %c\n", type);
+        (void) fprintf(stdout, "match: %c\n", match);
+        (void) fprintf(stdout, "type %i not match with %i (%c)\n", type, match, type);
+        (void) fprintf(stdout, "TOKEN: %s\n", token);
+        (void) fprintf(stdout, "RAW: %s\n", raw);
+        error("syntax error");
+    }
+    next();
+}
+
+static void block(HashTable *ht) {
+    bool write_state = false;
+    bool if_state = false;
+    bool while_state = false;
+    bool then_state = false;
+    bool do_state = false;
+    bool repeat_state = true;
+
+    int lparen_depth = 0;
+
+    goto program;
+
+    decl_list:
+    goto decl;
+
+    decl:
+    if (type == TOKEN_IS) {
+        expect(TOKEN_IS);
+        goto type_assign;
+    }
+    goto ident_list;
+
+    ident_list:
+    if (type == TOKEN_COMMA) {
+        expect(TOKEN_COMMA);
+        goto ident_list;
+    }
+    goto identifier;
+
+    identifier:
+    expect(TOKEN_IDENTIFIER);
+    if (ht_search(ht, token) == NULL) {
+        ht_insert(ht, token, TOKEN_IDENTIFIER);
+    }
+    if (type == TOKEN_ASSIGN) {
+        goto stmt_list;
+    }
+    goto decl;
+
+    type_assign:
+    if (type == TOKEN_INTEGER) {
+        expect(TOKEN_INTEGER);
+    }
+    if (type == TOKEN_FLOAT) {
+        expect(TOKEN_FLOAT);
+    }
+    if (type == TOKEN_CHARACTER) {
+        expect(TOKEN_CHARACTER);
+    }
+
+    expect(TOKEN_SEMICOLON);
+
+    if (type != TOKEN_IDENTIFIER) {
+        goto stmt_list;
+    }
+
+    goto decl_list;
+
+    stmt_list:
+    switch (type) {
         case TOKEN_IDENTIFIER:
-            ht_insert(ht, token, TOKEN_IDENTIFIER);
-            break;
-        case TOKEN_LITERAL:
-        case TOKEN_INTEGER:
-        case TOKEN_PROGRAM:
-        case TOKEN_FLOAT:
+        case TOKEN_ASSIGN:
         case TOKEN_READ:
         case TOKEN_WRITE:
-        case TOKEN_END:
         case TOKEN_IF:
-        case TOKEN_THEN:
+        case TOKEN_WHILE:
+        case TOKEN_REPEAT:
+            goto stmt;
         case TOKEN_ELSE:
-        case TOKEN_BEGIN:
-        case TOKEN_FLOAT_CONST:
-        case TOKEN_INTEGER_CONST:
-        case TOKEN_CHAR_CONST:
-        case TOKEN_IS:
-        case TOKEN_QUOTIENT:
+            if (then_state != true) {
+                error("MISSING THEN STATE");
+            }
+            goto stmt;
+        case TOKEN_UNTIL:
+            if(repeat_state != true) {
+                error("MISSING REPEAT STATE");
+            }
+            goto until_stmt;
+        case TOKEN_END:
+            if (then_state == true) {
+                expect(TOKEN_END);
+                then_state = false;
+                goto stmt_list;
+            }
+            if (do_state == true) {
+                expect(TOKEN_END);
+                do_state = false;
+                goto stmt_list;
+            }
+            expect(TOKEN_END);
+            expect(TOKEN_EOF);
+            (void) fputs("Compilation Succesfull. Exiting\n", stdout);
+            exit(1);
+        default:
+            expect(TOKEN_SEMICOLON);
+            goto stmt;
+    }
+
+    stmt:
+    switch (type) {
+        case TOKEN_IDENTIFIER:
+            expect(TOKEN_IDENTIFIER);
+            goto assign_stmt;
         case TOKEN_ASSIGN:
-        case TOKEN_SEMICOLON:
-        case TOKEN_COMMA:
-        case TOKEN_MULTIPLY:
-        case TOKEN_SUM:
-        case TOKEN_MINUS:
-        case TOKEN_LESSER:
+            goto assign_stmt;
+        case TOKEN_READ:
+            goto read_stmt;
+        case TOKEN_WRITE:
+            goto write_stmt;
+        case TOKEN_IF:
+            goto if_stmt;
+        case TOKEN_WHILE:
+            goto while_stmt;
+        case TOKEN_ELSE:
+            goto else_stmt;
+        case TOKEN_REPEAT:
+            goto repeat_stmt;
+        default:
+            goto stmt_list;
+    }
+
+    repeat_stmt:
+    expect(TOKEN_REPEAT);
+    repeat_state = true;
+    goto stmt_list;
+
+    until_stmt:
+    expect(TOKEN_UNTIL);
+    repeat_state = false;
+    goto simple_expr;
+
+
+    else_stmt:
+    expect(TOKEN_ELSE);
+    goto stmt_list;
+
+    do_stmt:
+    expect(TOKEN_DO);
+    do_state = true;
+    goto stmt_list;
+
+    while_stmt:
+    expect(TOKEN_WHILE);
+    while_state = true;
+    goto condition;
+
+    if_stmt:
+    expect(TOKEN_IF);
+    if_state = true;
+    goto condition;
+
+    then_stmt:
+    then_state = true;
+    expect(TOKEN_THEN);
+    goto stmt_list;
+
+    condition:
+    goto simple_expr;
+
+    read_stmt:
+    expect(TOKEN_READ);
+    expect(TOKEN_LPAREN);
+    expect(TOKEN_IDENTIFIER);
+    expect(TOKEN_RPAREN);
+    expect(TOKEN_SEMICOLON);
+    goto stmt_list;
+
+    assign_stmt:
+    expect(TOKEN_ASSIGN);
+    goto simple_expr;
+
+    write_stmt:
+    switch (type) {
+        case TOKEN_WRITE:
+            expect(TOKEN_WRITE);
+            expect(TOKEN_LPAREN);
+            write_state = true;
+            goto writable;
+
+        default:
+            goto stmt_list;
+    }
+
+    writable:
+    switch (type) {
+        case TOKEN_LITERAL:
+            expect(TOKEN_LITERAL);
+        default:
+            goto simple_expr;
+    }
+
+    simple_expr:
+    switch (type) {
         case TOKEN_LESSER_THAN_EQUALS:
+        case TOKEN_LESSER:
+        case TOKEN_EQUALS:
         case TOKEN_GREATER:
         case TOKEN_GREATER_THAN_EQUALS:
         case TOKEN_DIFFERENT:
+            goto relop;
+        case TOKEN_SUM:
+        case TOKEN_MINUS:
+        case TOKEN_OR:
+            goto addop;
+        case TOKEN_MULTIPLY:
+        case TOKEN_QUOTIENT:
+        case TOKEN_AND:
+            goto mulop;
+        case TOKEN_INTEGER_CONST:
+        case TOKEN_FLOAT_CONST:
+        case TOKEN_CHAR_CONST:
+            goto constants;
+        case TOKEN_IDENTIFIER:
+            expect(TOKEN_IDENTIFIER);
+            goto simple_expr;
         case TOKEN_LPAREN:
+            expect(TOKEN_LPAREN);
+            if (while_state == true || if_state == true) {
+                lparen_depth++;
+            }
+            goto simple_expr;
         case TOKEN_RPAREN:
-            break;
-        }
+            expect(TOKEN_RPAREN);
+            if (write_state == true) {
+                expect(TOKEN_SEMICOLON);
+                write_state = false;
+                goto write_stmt;
+            }
+            if (if_state == true) {
+                lparen_depth--;
+                if (lparen_depth == 0) {
+                    if_state = false;
+                    goto then_stmt;
+                }
+            }
+            if (while_state == true) {
+                lparen_depth--;
+                if (lparen_depth == 0) {
+                    while_state = false;
+                    goto do_stmt;
+                }
+            }
+            goto simple_expr;
+        default:
+            goto stmt_list;
     }
-    (void)fputc('\n', stdout);
+
+    relop:
+    switch (type) {
+        case TOKEN_LESSER_THAN_EQUALS:
+            expect(TOKEN_LESSER_THAN_EQUALS);
+            goto simple_expr;
+        case TOKEN_LESSER:
+            expect(TOKEN_LESSER);
+            goto simple_expr;
+        case TOKEN_EQUALS:
+            expect(TOKEN_EQUALS);
+            goto simple_expr;
+        case TOKEN_GREATER:
+            expect(TOKEN_GREATER);
+            goto simple_expr;
+        case TOKEN_GREATER_THAN_EQUALS:
+            expect(TOKEN_GREATER_THAN_EQUALS);
+            goto simple_expr;
+        case TOKEN_DIFFERENT:
+            expect(TOKEN_DIFFERENT);
+            goto simple_expr;
+    }
+
+    mulop:
+    switch (type) {
+        case TOKEN_MULTIPLY:
+            expect(TOKEN_MULTIPLY);
+            goto simple_expr;
+        case TOKEN_QUOTIENT:
+            expect(TOKEN_MINUS);
+            goto simple_expr;
+        case TOKEN_AND:
+            expect(TOKEN_AND);
+            goto simple_expr;
+    }
+
+    addop:
+    switch (type) {
+        case TOKEN_SUM:
+            expect(TOKEN_SUM);
+            goto simple_expr;
+        case TOKEN_MINUS:
+            expect(TOKEN_MINUS);
+            goto simple_expr;
+        case TOKEN_OR:
+            expect(TOKEN_OR);
+            goto simple_expr;
+    }
+
+    constants:
+    switch (type) {
+        case TOKEN_INTEGER_CONST:
+            expect(TOKEN_INTEGER_CONST);
+            goto simple_expr;
+        case TOKEN_FLOAT_CONST:
+            expect(TOKEN_FLOAT_CONST);
+            goto simple_expr;
+        case TOKEN_CHAR_CONST:
+            expect(TOKEN_CHAR_CONST);
+            goto simple_expr;
+    }
+
+    program:
+    expect(TOKEN_PROGRAM);
+    expect(TOKEN_IDENTIFIER);
+    ht_insert(ht, token, TOKEN_IDENTIFIER);
+    expect(TOKEN_BEGIN);
+    goto decl_list;
 }
 
-static words(HashTable *ht)
-{
-    ht_insert(ht, "program", TOKEN_PROGRAM);
-    ht_insert(ht, "begin", TOKEN_BEGIN);
-    ht_insert(ht, "end", TOKEN_END);
-    ht_insert(ht, "is", TOKEN_IS);
-    ht_insert(ht, "int", TOKEN_INTEGER);
-    ht_insert(ht, "float", TOKEN_FLOAT);
-    ht_insert(ht, "char", TOKEN_CHARACTER);
-    ht_insert(ht, "if", TOKEN_IF);
-    ht_insert(ht, "then", TOKEN_THEN);
-    ht_insert(ht, "else", TOKEN_ELSE);
-    ht_insert(ht, "repeat", TOKEN_REPEAT);
-    ht_insert(ht, "until", TOKEN_UNTIL);
-    ht_insert(ht, "while", TOKEN_WHILE);
-    ht_insert(ht, "do", TOKEN_DO);
-    ht_insert(ht, "read", TOKEN_READ);
-    ht_insert(ht, "write", TOKEN_WRITE);
+static void parser(HashTable *ht) {
+    next();
+    block(ht);
 }
 
-int main(int argc, char *argv[])
+static words(HashTable
+*ht)
 {
+ht_insert(ht,
+"program", TOKEN_PROGRAM);
+ht_insert(ht,
+"begin", TOKEN_BEGIN);
+ht_insert(ht,
+"end", TOKEN_END);
+ht_insert(ht,
+"is", TOKEN_IS);
+ht_insert(ht,
+"int", TOKEN_INTEGER);
+ht_insert(ht,
+"float", TOKEN_FLOAT);
+ht_insert(ht,
+"char", TOKEN_CHARACTER);
+ht_insert(ht,
+"if", TOKEN_IF);
+ht_insert(ht,
+"then", TOKEN_THEN);
+ht_insert(ht,
+"else", TOKEN_ELSE);
+ht_insert(ht,
+"repeat", TOKEN_REPEAT);
+ht_insert(ht,
+"until", TOKEN_UNTIL);
+ht_insert(ht,
+"while", TOKEN_WHILE);
+ht_insert(ht,
+"do", TOKEN_DO);
+ht_insert(ht,
+"read", TOKEN_READ);
+ht_insert(ht,
+"write", TOKEN_WRITE);
+}
+
+int main(int argc, char *argv[]) {
     char *startp;
-    if (argc != 2)
-    {
+    if (argc != 2) {
         fputs("execution: main *.lamp file\n", stderr);
         exit(1);
     }
-    HashTable *ht = ht_create(3);
+    HashTable * ht = ht_create(3);
     words(ht);
     readin(argv[1]);
 
