@@ -23,8 +23,4 @@ begin
  write ({Outro? (S/N)});
  read(outro);
  until (outro == 'N' || outro == 'n')
-<<<<<<< HEAD
 end
-=======
-end.
->>>>>>> preditive parser

@@ -422,7 +422,7 @@ static void block(HashTable *ht) {
             expect(TOKEN_END);
             expect(TOKEN_EOF);
             (void) fputs("Compilation Succesfull. Exiting\n", stdout);
-            exit(1);
+            return 0;
         default:
             expect(TOKEN_SEMICOLON);
             goto stmt;
@@ -701,8 +701,6 @@ int main(int argc, char *argv[]) {
     startp = raw;
     parser(ht);
     free(startp);
-    ht_print(ht);
-    fprintf(stdout, "\n");
     ht_free(ht);
     return 0;
 }
