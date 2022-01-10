@@ -1,8 +1,10 @@
-program test4
-begin
+ program test4
+ begin
  a, aux is int;
  b is float;
  b = 0;
+ read(a);
+ read(b);
  if (a>b) then
  aux = b;
  b = a;

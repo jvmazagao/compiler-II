@@ -52,170 +52,632 @@ Varios casos de testes não continham o token terminal `.` que significava o fim
 ### Caso 3:
 Varios leques de `;` não fechavam os blocos e com isso incrementamos os tokens e o codigo compilou normalmente. 
 
+#### Test 1
+O teste original tinha como codigo
+```
+/* Test */
+program teste1
+    a is int;
+    b is float;
+begin
+    write(a+b);
+end
+```
+Apresenta erros de sintaxe na linha três, que logo em seguida do nome do programa deve começar com `begin`.
+
+Resposta do compilador
+```
+./main tests/test1.lamp
+lamp: error: 3 - exception: syntax error
+```
+Correção do caso de teste:
+```
+/* Test */
+program teste1
+begin
+    a is int;
+    b is float;
+    write(a+b);
+end
+```
+Apresenta um erro de sintaxe no final do arquivo na linha 7, falta o simbolo terminal `.`.
+```
+./main tests/test1.lamp
+lamp: error: 7 - exception: syntax error
+```
+Correção do caso de teste:
+```
+/* Test */
+program teste1
+begin
+    a is int;
+    b is float;
+    write(a+b);
+end.
+```#### Test 2
+O teste original tinha como codigo
+```
+program teste1
+ a, b is int;
+ result is int;
+ a,x is float;
+begin
+ a = 12a;
+ x = 12.;
+ read (a);
+ read (b);
+ read (c)
+ result = (a*b + 1) / (c+2);
+ write {Resultado: };
+ write (result);
+end.
+```
+Apresenta erros de sintaxe na linha três, que logo em seguida do nome do programa deve começar com `begin`.
+
+Resposta do compilador
+```
+./main tests/test1.lamp
+lamp: error: 2 - exception: syntax error
+```
+Correção do caso de teste:
+
+```
+program teste1
+begin
+ a, b is int;
+ result is int;
+ a,x is float;
+ a = 12a;
+ x = 12.;
+ read (a);
+ read (b);
+ read (c)
+ result = (a*b + 1) / (c+2);
+ write {Resultado: };
+ write (result);
+end.
+```
+Apresenta a falta de um `;` na linha 10, que é apresentado como linha 11 (existe uma possibilidade de melhorria para mostrar a linha correta). 
+
+Resposta do compilador
+```
+./main tests/test1.lamp
+lamp: error: 11 - exception: syntax error
+```
+
+Correção do caso de teste:
+
+```
+program teste1
+begin
+ a, b is int;
+ result is int;
+ a,x is float;
+ a = 12a;
+ x = 12.;
+ read (a);
+
+ read (b);
+ read (c);
+ result = (a*b + 1) / (c+2);
+ write {Resultado: };
+ write (result);
+end.
+```
+
+Apresenta a falta de abertura e fechamento de parenteses na linha 12.
+
+Resposta do compilador
+```
+./main tests/test1.lamp
+lamp: error: 11 - exception: syntax error
+```
+
+Correção do codigo:
+```
+program teste1
+begin
+ a, b is int;
+ result is int;
+ a,x is float;
+ a = 12a;
+ x = 12.;
+ read (a);
+ read (b);
+ read (c);
+ result = (a*b + 1) / (c+2);
+ write ({Resultado: });
+ write (result);
+end.
+```
+Compilação ocorre normalmente.
+
+#### Test 3
+```
+program teste2
+ a, b, c:int;
+ d, _var: float;
+ teste2 = 1;
+ Read (a);
+ b = a * a;
+ c = b + a/2 * (35/b);
+ write c;
+ val := 34.2
+ c = val + 2.2 + a;
+ write (val)
+end.
+```
+Erro de compilação na linha 2, falta o `begin` após o nome do arquivo.
+
+```
+./main tests/test3.lamp
+lamp: error: 2 - exception: syntax error
+```
+Correção e recompilação:
+```
+program teste2
+begin
+ a, b, c:int;
+ d, _var: float;
+ teste2 = 1;
+ Read (a);
+ b = a * a;
+ c = b + a/2 * (35/b);
+ write c;
+ val := 34.2
+ c = val + 2.2 + a;
+ write (val)
+end.
+```
+Erro de compilação na linha 2. Declaração de variável errada, `c:int`.
+
+```
+./main tests/test3.lamp
+lamp: error: 3 - exception: syntax error
+```
+Correção e recompilação:
+```
+program teste2
+begin
+ a, b, c is int;
+ d, var: float;
+ teste2 = 1;
+ Read (a);
+ b = a * a;
+ c = b + a/2 * (35/b);
+ write c;
+ val := 34.2
+ c = val + 2.2 + a;
+ write (val)
+end.
+```
+Erro de compilação na linha 4. Declaração de variável errada, `_var: float`.
+
+```
+./main tests/test3.lamp
+lamp: error: 4 - exception: syntax error
+```
+Correção e recompilação:
+```
+program teste2
+begin
+ a, b, c is int;
+ d, var is float;
+ teste2 = 1;
+ Read (a);
+ b = a * a;
+ c = b + a/2 * (35/b);
+ write c;
+ val := 34.2
+ c = val + 2.2 + a;
+ write (val)
+end.
+```
+Erro de compilação na linha 4. Declaração de variável errada, `var: float`.
+
+```
+./main tests/test3.lamp
+lamp: error: 4 - exception: syntax error
+```
+
+Correção e recompilação:
+```
+program teste2
+begin
+ a, b, c is int;
+ d, var is float;
+ teste2 = 1;
+ Read (a);
+ b = a * a;
+ c = b + a/2 * (35/b);
+ write c;
+ val := 34.2
+ c = val + 2.2 + a;
+ write (val)
+end.
+```
+Erro de compilação na linha 6. Sintaxe do `Read` está incorreta.
+
+```
+./main tests/test3.lamp
+lamp: error: 6 - exception: syntax error
+```
+
+Correção e recompilação:
+```
+program teste2
+begin
+ a, b, c is int;
+ d, var is float;
+ teste2 = 1;
+ read (a);
+ b = a * a;
+ c = b + a/2 * (35/b);
+ write c;
+ val := 34.2
+ c = val + 2.2 + a;
+ write (val)
+end.
+```
+Erro de compilação na linha 9. Sintaxe do `write` está incorreta faltando parenteses.
+
+```
+./main tests/test3.lamp
+lamp: error: 9 - exception: syntax error
+```
+Correção e recompilação:
+```
+program teste2
+begin
+ a, b, c is int;
+ d, var is float;
+ teste2 = 1;
+ read (a);
+ b = a * a;
+ c = b + a/2 * (35/b);
+ write (c);
+ val := 34.2
+ c = val + 2.2 + a;
+ write (val)
+end.
+```
+Erro de compilação na linha 10. Sintaxe do `assign (:=)` está errada.
+
+```
+./main tests/test3.lamp
+lamp: error: 10 - exception: syntax error
+```
+Correção e recompilação:
+```
+program teste2
+begin
+ a, b, c is int;
+ d, var is float;
+ teste2 = 1;
+ read (a);
+ b = a * a;
+ c = b + a/2 * (35/b);
+ write (c);
+ val := 34.2
+ c = val + 2.2 + a;
+ write (val)
+end.
+```
+Erro de compilação na linha 10. Falta `;`.
+
+```
+./main tests/test3.lamp
+lamp: error: 10 - exception: syntax error
+```
+
+Compilação ocorre normalmente.
+
+#### Test 4
+
+```
+ program
+ a, aux is int;
+ b is float
+ begin
+ b = 0;
+ in (a);
+ in(b);
+ if (a>b) then
+ aux = b;
+ b = a;
+ a = aux
+ end;
+ write(a;
+ write(b)
+```
+
+Error: Falta de identifier - nome do programa.
+```
+./main tests/test4.lamp
+lamp: error: 2 - exception: syntax error
+```
+
+Correção e recompilação
+
+
+```
+ program test4
+ a, aux is int;
+ b is float
+ begin
+ b = 0;
+ in (a);
+ in(b);
+ if (a>b) then
+ aux = b;
+ b = a;
+ a = aux
+ end;
+ write(a;
+ write(b)
+```
+
+Error: Falta de `begin` após `identifier`
+```
+./main tests/test4.lamp
+lamp: error: 2 - exception: syntax error
+
+```
+
+Correção e recompilação
+
+```
+ program test4
+ a, aux is int;
+ b is float;
+ begin
+ b = 0
+ in (a);
+ in(b);
+ if (a>b) then
+ aux = b;
+ b = a;
+ a = aux
+ end;
+ write(a;
+ write(b)
+```
+
+> Vi uma oportunidade de fazer uma melhoria na forma como a exceção estava sendo mostrada, sendo assim, apartir desse memomento a exceção fica mais limpa e mais facil a leitura. Podendo assim melhorar a implementação.
+
+Error: Falta de `;`
+```
+./main tests/test4.lamp
+lamp exception near line: 5 
+Exception: Syntax error near token: b
+```
+
+
+Correção e recompilação
+
+```
+ program test4
+ a, aux is int;
+ b is float;
+ begin
+ b = 0;
+ in (a);
+ in(b);
+ if (a>b) then
+ aux = b;
+ b = a;
+ a = aux
+ end;
+ write(a;
+ write(b)
+```
+
+Error: O uso de in nesse contexto é errado. Fora substituido por `read`.
+
+```
+./main tests/test4.lamp
+lamp exception near line: 6 
+Exception: Syntax error near token: in
+```
+
+Correção e recompilação
+
+```
+ program test4
+ a, aux is int;
+ b is float;
+ begin
+ b = 0;
+ read(a);
+ in(b);
+ if (a>b) then
+ aux = b;
+ b = a;
+ a = aux
+ end;
+ write(a;
+ write(b)
+```
+
+Error: O uso de in nesse contexto é errado. Fora substituido por `read`.
+
+```
+./main tests/test4.lamp
+lamp exception near line: 7
+Exception: Syntax error near token: in
+```
+
+Correção e recompilação
+
+```
+ program test4
+ a, aux is int;
+ b is float;
+ begin
+ b = 0;
+ read(a);
+ read(b);
+ if (a>b) then
+ aux = b;
+ b = a;
+ a = aux
+ end;
+ write(a;
+ write(b)
+```
+
+Error: O uso de in nesse contexto é errado. Fora substituido por `read`.
+
+```
+./main tests/test4.lamp
+lamp exception near line: 7
+Exception: Syntax error near token: in
+```
+Correção e recompilação
+
+```
+ program test4
+ a, aux is int;
+ b is float;
+ begin
+ b = 0;
+ read(a);
+ read(b);
+ if (a>b) then
+ aux = b;
+ b = a;
+ a = aux
+ end;
+ write(a;
+ write(b)
+```
+Falta de `;`
+```
+./main tests/test4.lamp
+lamp exception near line: 12
+Exception: Syntax error near token: end
+```
+Correção e recompilação
+
+```
+ program test4
+ a, aux is int;
+ b is float;
+ begin
+ b = 0;
+ read(a);
+ read(b);
+ if (a>b) then
+ aux = b;
+ b = a;
+ a = aux;
+ end;
+ write(a;
+ write(b)
+```
+Uso de `;`
+```
+./main tests/test4.lamp
+lamp exception near line: 12
+Exception: Syntax error near token: end
+```
+```
+Correção e recompilação
+
+```
+ program test4
+ a, aux is int;
+ b is float;
+ begin
+ b = 0;
+ read(a);
+ read(b);
+ if (a>b) then
+ aux = b;
+ b = a;
+ a = aux;
+ end
+ write(a;
+ write(b)
+```
+Falta de `)`
+```
+./main tests/test4.lamp
+lamp exception near line: 13
+Exception: Syntax error near token: write
+```
+
+Correção e recompilação
+
+```
+ program test4
+ a, aux is int;
+ b is float;
+ begin
+ b = 0;
+ read(a);
+ read(b);
+ if (a>b) then
+ aux = b;
+ b = a;
+ a = aux;
+ end
+ write(a);
+ write(b);
+```
+Falta de `;`
+```
+./main tests/test4.lamp
+lamp exception near line: 14
+Exception: Syntax error near token: write
+```
+
+Correção e recompilação
+
+```
+ program test4
+ a, aux is int;
+ b is float;
+ begin
+ b = 0;
+ read(a);
+ read(b);
+ if (a>b) then
+ aux = b;
+ b = a;
+ a = aux;
+ end
+ write(a);
+ write(b);
+```
+Loop infinito por causa da falta de end.
+```
+./main tests/test4.lamp
+```
+
+Correção e recompilação
+
+```
+ program test4
+ a, aux is int;
+ b is float;
+ begin
+ b = 0;
+ read(a);
+ read(b);
+ if (a>b) then
+ aux = b;
+ b = a;
+ a = aux;
+ end
+ write(a);
+ write(b);
+ end.
+```
+
+
 ## Considerações
 O codigo está em um arquivo apenas, dado que queriamos experimentar uma implementação em C pois precisariamos da mesma para algumas materias no futuro do nosso curso e não tivemos muito contato com a mesma. Com isso o codigo pode conter duplicações e problemas de padrões de C dado o contexto que cada um de nós (Lara e João) estamos inseridos. 
 
-### Teste 6
-
-O caractere `'n` está mal formatado, a correção para `'n'` corrige a compilação.
-
-> Correção do codigo
-```
-/* Teste do meu compilador */
-program teste5
- a, b, c, maior is int;
- outro is char;
-begin
- repeat
- write({A});
- read(a);
- write({B});
- read(b);
- write({C});
- read(c);
- if ( (a>b) && (a>c) ) end
- maior = a
-
- else
- if (b>c) then
- maior = b;
-
- else
- maior = c
- end
- end;
- write({Maior valor:}});
- write (maior);
- write ({Outro? (S/N)});
- read(outro);
- until (outro == 'N' || outro == 'n')
-end
-```
-Recompilação
-```
-test6.lamp... 
-Token: program - Type: 1
-Token: teste5 - Type: 17
-Token: a - Type: 17
-Token: a - Type: 44
-Token: b - Type: 17
-Token: b - Type: 44
-Token: c - Type: 17
-Token: c - Type: 44
-Token: maior - Type: 17
-Token: is - Type: 18
-Token: int - Type: 14
-Token: int - Type: 59
-Token: outro - Type: 17
-Token: is - Type: 18
-Token: char - Type: 15
-Token: char - Type: 59
-Token: begin - Type: 19
-Token: repeat - Type: 6
-Token: write - Type: 11
-Token: write - Type: 40
-Token: A - Type: 16
-Token: A - Type: 41
-Token: A - Type: 59
-Token: read - Type: 10
-Token: read - Type: 40
-Token: a - Type: 17
-Token: a - Type: 41
-Token: a - Type: 59
-Token: write - Type: 11
-Token: write - Type: 40
-Token: B - Type: 16
-Token: B - Type: 41
-Token: B - Type: 59
-Token: read - Type: 10
-Token: read - Type: 40
-Token: b - Type: 17
-Token: b - Type: 41
-Token: b - Type: 59
-Token: write - Type: 11
-Token: write - Type: 40
-Token: C - Type: 16
-Token: C - Type: 41
-Token: C - Type: 59
-Token: read - Type: 10
-Token: read - Type: 40
-Token: c - Type: 17
-Token: c - Type: 41
-Token: c - Type: 59
-Token: if - Type: 2
-Token: if - Type: 40
-Token: if - Type: 40
-Token: a - Type: 17
-Token: a - Type: 62
-Token: a - Type: 41
-Token: a - Type: 97
-Token: a - Type: 40
-Token: a - Type: 17
-Token: a - Type: 62
-Token: a - Type: 41
-Token: a - Type: 41
-Token: end - Type: 69
-Token: maior - Type: 17
-Token: maior - Type: 61
-Token: a - Type: 17
-Token: else - Type: 5
-Token: if - Type: 2
-Token: if - Type: 40
-Token: b - Type: 17
-Token: b - Type: 62
-Token: b - Type: 41
-Token: then - Type: 3
-Token: maior - Type: 17
-Token: maior - Type: 61
-Token: b - Type: 17
-Token: b - Type: 59
-Token: else - Type: 5
-Token: maior - Type: 17
-Token: maior - Type: 61
-Token: c - Type: 17
-Token: end - Type: 69
-Token: end - Type: 69
-Token: end - Type: 59
-Token: write - Type: 11
-Token: write - Type: 40
-Token: Maior valor: - Type: 16
-Token: Maior valor: - Type: 16
-Token: Maior valor: - Type: 41
-Token: Maior valor: - Type: 59
-Token: write - Type: 11
-Token: write - Type: 40
-Token: maior - Type: 17
-Token: maior - Type: 41
-Token: maior - Type: 59
-Token: write - Type: 11
-Token: write - Type: 40
-Token: Outro? (S/N) - Type: 16
-Token: Outro? (S/N) - Type: 41
-Token: Outro? (S/N) - Type: 59
-Token: read - Type: 10
-Token: read - Type: 40
-Token: outro - Type: 17
-Token: outro - Type: 41
-Token: outro - Type: 59
-Token: until - Type: 7
-Token: until - Type: 40
-Token: outro - Type: 17
-Token: outro - Type: 22
-Token: outro - Type: 67
-Token: outro - Type: 111
-Token: outro - Type: 17
-Token: outro - Type: 22
-Token: outro - Type: 67
-Token: outro - Type: 41
-Token: end - Type: 69
-
-
----- Hash Table ---
-@0: float => 13 | char => 15 | if => 2 | while => 8 | write => 11 | c => 17 | 
-@1: program => 1 | begin => 19 | is => 18 | int => 14 | until => 7 | do => 9 | read => 10 | a => 17 | 
-@2: end => 69 | then => 3 | else => 5 | repeat => 6 | teste5 => 17 | b => 17 | maior => 17 | outro => 17 | 
--------------------
-
-```
 
 ## Autores João Victor Mazagão e Lara Loures

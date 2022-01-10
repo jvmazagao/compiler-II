@@ -320,12 +320,9 @@ static void next(void) {
 
 static void expect(int match) {
     if (match != type) {
-        (void) fprintf(stdout, "type: %c\n", type);
-        (void) fprintf(stdout, "match: %c\n", match);
-        (void) fprintf(stdout, "type %i not match with %i (%c)\n", type, match, type);
-        (void) fprintf(stdout, "TOKEN: %s\n", token);
-        (void) fprintf(stdout, "RAW: %s\n", raw);
-        error("syntax error");
+        char dest[] = "Syntax error near token: ";
+        strcat(dest, token);
+        error(dest);
     }
     next();
 }
@@ -423,8 +420,10 @@ static void block(HashTable *ht) {
             expect(TOKEN_EOF);
             (void) fputs("Compilation Succesfull. Exiting\n", stdout);
             return 0;
-        default:
+        case TOKEN_SEMICOLON:
             expect(TOKEN_SEMICOLON);
+            goto stmt;
+        default:
             goto stmt;
     }
 
