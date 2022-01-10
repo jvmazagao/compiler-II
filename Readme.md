@@ -675,6 +675,726 @@ Correção e recompilação
  end.
 ```
 
+#### Test 5
+
+```
+programa teste4
+/* Teste4 do meu compilador
+ pontuacao, pontuacaoMaxina, disponibilidade is inteiro;
+ pontuacaoMinima is char;
+begin
+ pontuacaoMinima = 50;
+ pontuacaoMaxima = 100;
+ write({Pontuacao do candidato: });
+ read(pontuacao);
+ write({Disponibilidade do candidato: });
+ read(disponibilidade);
+
+ while (pontuacao>0 && (pontuacao<=pontuacaoMaxima) do
+ if ((pontuação > pontuacaoMinima) && (disponibilidade==1)) then
+ write({Candidato aprovado.})
+ else
+ write({Candidato reprovado.})
+ end
+ write({Pontuacao do candidato: });
+ read(pontuacao);
+ write({Disponibilidade do candidato: });
+ read(disponibilidade);
+ end
+end
+```
+Erro
+```
+lamp exception near line: 1 
+Exception: Syntax error near token: programa
+```
+
+Correção e recompilação
+```
+program teste4
+/* Teste4 do meu compilador
+ pontuacao, pontuacaoMaxina, disponibilidade is inteiro;
+ pontuacaoMinima is char;
+begin
+ pontuacaoMinima = 50;
+ pontuacaoMaxima = 100;
+ write({Pontuacao do candidato: });
+ read(pontuacao);
+ write({Disponibilidade do candidato: });
+ read(disponibilidade);
+
+ while (pontuacao>0 && (pontuacao<=pontuacaoMaxima) do
+ if ((pontuação > pontuacaoMinima) && (disponibilidade==1)) then
+ write({Candidato aprovado.})
+ else
+ write({Candidato reprovado.})
+ end
+ write({Pontuacao do candidato: });
+ read(pontuacao);
+ write({Disponibilidade do candidato: });
+ read(disponibilidade);
+ end
+end
+```
+Erro
+```
+./main tests/test5.lamp
+lamp exception near line: 24 
+Exception: unterminated comment
+```
+Correção e recompilação
+
+```
+program teste4 
+/* Teste4 do meu compilador */
+ pontuacao, pontuacaoMaxina, disponibilidade is inteiro;
+ pontuacaoMinima is char;
+begin
+ pontuacaoMinima = 50;
+ pontuacaoMaxima = 100;
+ write({Pontuacao do candidato: });
+ read(pontuacao);
+ write({Disponibilidade do candidato: });
+ read(disponibilidade);
+
+ while (pontuacao>0 && (pontuacao<=pontuacaoMaxima) do
+ if ((pontuação > pontuacaoMinima) && (disponibilidade==1)) then
+ write({Candidato aprovado.})
+ else
+ write({Candidato reprovado.})
+ end
+ write({Pontuacao do candidato: });
+ read(pontuacao);
+ write({Disponibilidade do candidato: });
+ read(disponibilidade);
+ end
+end
+```
+
+```
+./main tests/test5.lamp
+lamp exception near line: 3 
+Exception: Syntax error near token: pontuacao
+```
+Correção e recompilação
+```
+program teste4 begin
+/* Teste4 do meu compilador */
+ pontuacao, pontuacaoMaxina, disponibilidade is inteiro;
+ pontuacaoMinima is char;
+ pontuacaoMinima = 50;
+ pontuacaoMaxima = 100;
+ write({Pontuacao do candidato: });
+ read(pontuacao);
+ write({Disponibilidade do candidato: });
+ read(disponibilidade);
+
+ while (pontuacao>0 && (pontuacao<=pontuacaoMaxima) do
+ if ((pontuação > pontuacaoMinima) && (disponibilidade==1)) then
+ write({Candidato aprovado.})
+ else
+ write({Candidato reprovado.})
+ end
+ write({Pontuacao do candidato: });
+ read(pontuacao);
+ write({Disponibilidade do candidato: });
+ read(disponibilidade);
+ end
+end
+```
+./main tests/test5.lamp
+lamp exception near line: 3 
+Exception: Syntax error near token: pontuacao
+```
+
+Correção e recompilação
+```
+program teste4 begin
+/* Teste4 do meu compilador */
+ pontuacao, pontuacaoMaxina, disponibilidade is int;
+ pontuacaoMinima is char;
+ pontuacaoMinima = 50;
+ pontuacaoMaxima = 100;
+ write({Pontuacao do candidato: });
+ read(pontuacao);
+ write({Disponibilidade do candidato: });
+ read(disponibilidade);
+
+ while (pontuacao>0) && (pontuacao<=pontuacaoMaxima) do
+ if ((pontuação > pontuacaoMinima) && (disponibilidade==1)) then
+ write({Candidato aprovado.})
+ else
+ write({Candidato reprovado.})
+ end
+ write({Pontuacao do candidato: });
+ read(pontuacao);
+ write({Disponibilidade do candidato: });
+ read(disponibilidade);
+ end
+end
+```
+./main tests/test5.lamp
+lamp exception near line: 13 
+Exception: Syntax error near token: &&
+```
+Correção e recompilação
+```
+program teste4 begin
+/* Teste4 do meu compilador */
+ pontuacao, pontuacaoMaxina, disponibilidade is int;
+ pontuacaoMinima is char;
+ pontuacaoMinima = 50;
+ pontuacaoMaxima = 100;
+ write({Pontuacao do candidato: });
+ read(pontuacao);
+ write({Disponibilidade do candidato: });
+ read(disponibilidade);
+
+ while ((pontuacao>0) && (pontuacao<=pontuacaoMaxima)) do
+ if ((pontuação > pontuacaoMinima) && (disponibilidade==1)) then
+ write({Candidato aprovado.})
+ else
+ write({Candidato reprovado.})
+ end
+ write({Pontuacao do candidato: });
+ read(pontuacao);
+ write({Disponibilidade do candidato: });
+ read(disponibilidade);
+ end
+end
+```
+./main tests/test5.lamp
+lamp exception near line: 13 
+Exception: Syntax error near token: pontuacao
+```
+
+Correção e recompilação
+```
+program teste4 begin
+/* Teste4 do meu compilador */
+ pontuacao, pontuacaoMaxina, disponibilidade is int;
+ pontuacaoMinima is char;
+ pontuacaoMinima = 50;
+ pontuacaoMaxima = 100;
+ write({Pontuacao do candidato: });
+ read(pontuacao);
+ write({Disponibilidade do candidato: });
+ read(disponibilidade);
+
+ while ((pontuacao>0) && (pontuacao<=pontuacaoMaxima)) do
+ if ((pontuação > pontuacaoMinima) && (disponibilidade==1)) then
+ write({Candidato aprovado.})
+ else
+ write({Candidato reprovado.})
+ end
+ write({Pontuacao do candidato: });
+ read(pontuacao);
+ write({Disponibilidade do candidato: });
+ read(disponibilidade);
+ end
+end
+```
+./main tests/test5.lamp
+lamp exception near line: 16 
+Exception: Syntax error near token: else
+```
+
+Correção e recompilação
+```
+program teste4 begin
+/* Teste4 do meu compilador */
+ pontuacao, pontuacaoMaxina, disponibilidade is int;
+ pontuacaoMinima is char;
+ pontuacaoMinima = 50;
+ pontuacaoMaxima = 100;
+ write({Pontuacao do candidato: });
+ read(pontuacao);
+ write({Disponibilidade do candidato: });
+ read(disponibilidade);
+
+ while ((pontuacao>0) && (pontuacao<=pontuacaoMaxima)) do
+ if ((pontuação > pontuacaoMinima) && (disponibilidade==1)) then
+ write({Candidato aprovado.})
+ else
+ write({Candidato reprovado.})
+ end
+ write({Pontuacao do candidato: });
+ read(pontuacao);
+ write({Disponibilidade do candidato: });
+ read(disponibilidade);
+ end
+end
+
+```
+./main tests/test5.lamp
+lamp exception near line: 16 
+Exception: Syntax error near token: else
+```
+
+Correção e recompilação
+```
+program teste4 begin
+/* Teste4 do meu compilador */
+ pontuacao, pontuacaoMaxina, disponibilidade is int;
+ pontuacaoMinima is char;
+ pontuacaoMinima = 50;
+ pontuacaoMaxima = 100;
+ write({Pontuacao do candidato: });
+ read(pontuacao);
+ write({Disponibilidade do candidato: });
+ read(disponibilidade);
+
+ while ((pontuacao>0) && (pontuacao<=pontuacaoMaxima)) do
+ if ((pontuacao > pontuacaoMinima) && (disponibilidade==1)) then
+ write({Candidato aprovado.})
+ else
+ write({Candidato reprovado.})
+ end
+ write({Pontuacao do candidato: });
+ read(pontuacao);
+ write({Disponibilidade do candidato: });
+ read(disponibilidade);
+ end
+end
+
+```
+./main tests/test5.lamp
+lamp exception near line: 24
+Exception: Syntax error near token: en
+```
+
+Correção e recompilação
+```
+program teste4 begin
+/* Teste4 do meu compilador */
+ pontuacao, pontuacaoMaxina, disponibilidade is int;
+ pontuacaoMinima is char;
+ pontuacaoMinima = 50;
+ pontuacaoMaxima = 100;
+ write({Pontuacao do candidato: });
+ read(pontuacao);
+ write({Disponibilidade do candidato: });
+ read(disponibilidade);
+
+ while ((pontuacao>0) && (pontuacao<=pontuacaoMaxima)) do
+ if ((pontuacao > pontuacaoMinima) && (disponibilidade==1)) then
+ write({Candidato aprovado.})
+ else
+ write({Candidato reprovado.})
+ end
+ write({Pontuacao do candidato: });
+ read(pontuacao);
+ write({Disponibilidade do candidato: });
+ read(disponibilidade);
+ end
+end.
+
+```
+./main tests/test5.lamp
+lamp exception near line: 24
+Exception: Syntax error near token: en
+```
+
+#### Test 6
+
+```
+/* Teste do meu compilador */
+program teste5
+ a, b, c, maior is int;
+ outro is char;
+begin
+ repeat
+ write({A});
+ read(a);
+ write({B});
+ read(b);
+ write({C});
+ read(c);
+ if ( (a>b) && (a>c) ) end
+ maior = a
+
+ else
+ if (b>c) then
+ maior = b;
+
+ else
+ maior = c
+ end
+ end;
+ write({Maior valor:}});
+ write (maior);
+ write ({Outro? (S/N)});
+ read(outro);
+ until (outro == 'N' || outro == 'n)
+end
+```
+```
+lamp exception near line: 3 
+Exception: Syntax error near token: a
+```
+
+Correção e recompilação
+```
+/* Teste do meu compilador */
+program teste5
+begin
+ a, b, c, maior is int;
+ outro is char;
+ repeat
+ write({A});
+ read(a);
+ write({B});
+ read(b);
+ write({C});
+ read(c);
+ if ( (a>b) && (a>c) ) end
+ maior = a
+
+ else
+ if (b>c) then
+ maior = b;
+
+ else
+ maior = c
+ end
+ end;
+ write({Maior valor:}});
+ write (maior);
+ write ({Outro? (S/N)});
+ read(outro);
+ until (outro == 'N' || outro == 'n)
+end
+```
+```
+lamp exception near line: 13 
+Exception: Syntax error near token: end
+```
+Correção e recompilação
+```
+/* Teste do meu compilador */
+program teste5
+begin
+ a, b, c, maior is int;
+ outro is char;
+ repeat
+ write({A});
+ read(a);
+ write({B});
+ read(b);
+ write({C});
+ read(c);
+ if ( (a>b) && (a>c) ) then
+ maior = a
+
+ else
+ if (b>c) then
+ maior = b;
+
+ else
+ maior = c
+ end
+ end;
+ write({Maior valor:}});
+ write (maior);
+ write ({Outro? (S/N)});
+ read(outro);
+ until (outro == 'N' || outro == 'n)
+end
+```
+```
+lamp exception near line: 13 
+Exception: Syntax error near token: end
+```
+Correção e recompilação
+```
+/* Teste do meu compilador */
+program teste5
+begin
+ a, b, c, maior is int;
+ outro is char;
+ repeat
+ write({A});
+ read(a);
+ write({B});
+ read(b);
+ write({C});
+ read(c);
+ if ( (a>b) && (a>c) ) then
+ maior = a;
+
+ else
+ if (b>c) then
+ maior = b;
+
+ else
+ maior = c
+ end
+ end;
+ write({Maior valor:}});
+ write (maior);
+ write ({Outro? (S/N)});
+ read(outro);
+ until (outro == 'N' || outro == 'n)
+end
+```
+```
+lamp exception near line: 16
+Exception: Syntax error near token: else
+```
+Correção e recompilação
+```
+/* Teste do meu compilador */
+program teste5
+begin
+ a, b, c, maior is int;
+ outro is char;
+ repeat
+ write({A});
+ read(a);
+ write({B});
+ read(b);
+ write({C});
+ read(c);
+ if ( (a>b) && (a>c) ) then
+ maior = a;
+
+ else
+ if (b>c) then
+ maior = b;
+
+ else
+ maior = c;
+ end
+ end;
+ write({Maior valor:}});
+ write (maior);
+ write ({Outro? (S/N)});
+ read(outro);
+ until (outro == 'N' || outro == 'n)
+end
+```
+```
+lamp exception near line: 23
+Exception: Syntax error near token:end
+```
+
+Correção e recompilação
+```
+/* Teste do meu compilador */
+program teste5
+begin
+ a, b, c, maior is int;
+ outro is char;
+ repeat
+ write({A});
+ read(a);
+ write({B});
+ read(b);
+ write({C});
+ read(c);
+ if ( (a>b) && (a>c) ) then
+ maior = a;
+
+ else
+ if (b>c) then
+ maior = b;
+
+ else
+ maior = c;
+ end
+ end;
+ write({Maior valor:}});
+ write (maior);
+ write ({Outro? (S/N)});
+ read(outro);
+ until (outro == 'N' || outro == 'n)
+end
+```
+```
+lamp exception near line: 24
+Exception: Syntax error near token:read;
+```
+Correção e recompilação
+```
+/* Teste do meu compilador */
+program teste5
+begin
+ a, b, c, maior is int;
+ outro is char;
+ repeat
+ write({A});
+ read(a);
+ write({B});
+ read(b);
+ write({C});
+ read(c);
+ if ( (a>b) && (a>c) ) then
+ maior = a;
+
+ else
+ if (b>c) then
+ maior = b;
+
+ else
+ maior = c;
+ end
+ end;
+ write({Maior valor:}});
+ write (maior);
+ write ({Outro? (S/N));
+ read(outro);
+ until (outro == 'N' || outro == 'n)
+end
+```
+```
+lamp exception near line: 25 
+Exception: CHARACTER NOT FORMATTED
+```
+Correção e recompilação
+```
+/* Teste do meu compilador */
+program teste5
+begin
+ a, b, c, maior is int;
+ outro is char;
+ repeat
+ write({A});
+ read(a);
+ write({B});
+ read(b);
+ write({C});
+ read(c);
+ if ( (a>b) && (a>c) ) then
+ maior = a;
+
+ else
+ if (b>c) then
+ maior = b;
+
+ else
+ maior = c;
+ end
+ end;
+ write({Maior valor:}});
+ write (maior);
+ write ({Outro? (S/N));
+ read(outro);
+ until (outro == 'N' || outro == 'n')
+end
+```
+```
+lamp exception near line: 25 
+Exception: CHARACTER NOT FORMATTED
+```
+Correção e recompilação
+```
+/* Teste do meu compilador */
+program teste5
+begin
+ a, b, c, maior is int;
+ outro is char;
+ repeat
+ write({A});
+ read(a);
+ write({B});
+ read(b);
+ write({C});
+ read(c);
+ if ( (a>b) && (a>c) ) then
+ maior = a;
+
+ else
+ if (b>c) then
+ maior = b;
+
+ else
+ maior = c;
+ end
+ end;
+ write({Maior valor:}});
+ write (maior);
+ write ({Outro? (S/N));
+ read(outro);
+ until (outro == 'N' || outro == 'n')
+end
+```
+```
+lamp exception near line: 26 
+Exception: Syntax error near token: end
+```
+Correção e recompilação
+```
+/* Teste do meu compilador */
+program teste5
+begin
+ a, b, c, maior is int;
+ outro is char;
+ repeat
+ write({A});
+ read(a);
+ write({B});
+ read(b);
+ write({C});
+ read(c);
+ if ( (a>b) && (a>c) ) then
+ maior = a;
+
+ else
+ if (b>c) then
+ maior = b;
+
+ else
+ maior = c;
+ end
+ end;
+ write({Maior valor:}});
+ write (maior);
+ write ({Outro? (S/N));
+ read(outro);
+ until (outro == 'N' || outro == 'n')
+end.
+```
+
+#### Test 7
+```
+/* Test */
+program teste1
+    a is int;
+    b is float;
+begin
+    write(a+b);
+end
+```
+
+```
+lamp exception near line: 3 
+Exception: Syntax error near token: a
+```
+Corrigindo e recompilando
+```
+/* Test */
+program teste1
+begin
+    a is int;
+    b is float;
+    write(a+b);
+end
+```
+
+```
+lamp exception near line: 7 
+Exception: Syntax error near token: end
+```
+Corrigindo e recompilando
+```
+/* Test */
+program teste1
+begin
+    a is int;
+    b is float;
+    write(a+b);
+end.
+```
 
 ## Considerações
 O codigo está em um arquivo apenas, dado que queriamos experimentar uma implementação em C pois precisariamos da mesma para algumas materias no futuro do nosso curso e não tivemos muito contato com a mesma. Com isso o codigo pode conter duplicações e problemas de padrões de C dado o contexto que cada um de nós (Lara e João) estamos inseridos. 
