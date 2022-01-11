@@ -25,5 +25,5 @@ begin
  write (maior);
  write ({Outro? (S/N)});
  read(outro);
- until (outro == 'N' || outro == 'n)
+ until (outro == 'N' || outro == 'n')
 end

@@ -14,3 +14,6 @@ test:
 
 clean:
 	rm -f ${PROG} ${OBJS} ${PROG}.core
+
+run:
+	-./main $(ARGS)

@@ -11,8 +11,8 @@
 
 #define TOKEN_PROGRAM 1
 #define TOKEN_IF 2
-#define TOKEN_THEN 3 
-#define TOKEN_END 4
+#define TOKEN_THEN 3
+#define TOKEN_END 'E'
 #define TOKEN_ELSE 5
 #define TOKEN_REPEAT 6
 #define TOKEN_UNTIL 7
@@ -20,7 +20,6 @@
 #define TOKEN_DO 9
 #define TOKEN_READ 10
 #define TOKEN_WRITE 11
-#define TOKEN_IN 12
 #define TOKEN_FLOAT 13
 #define TOKEN_INTEGER 14
 #define TOKEN_CHARACTER 15
@@ -29,10 +28,9 @@
 #define TOKEN_IS 18
 #define TOKEN_BEGIN 19
 #define TOKEN_COMMENT 20
-#define TOKEN_NUMBER 21
 #define TOKEN_AND 'a'
 #define TOKEN_OR 'o'
-#define TOKEN_EQUALS 'e'
+#define TOKEN_EQUALS 22
 #define TOKEN_GREATER '>'
 #define TOKEN_GREATER_THAN_EQUALS 'g'
 #define TOKEN_LESSER '<'
@@ -48,19 +46,22 @@
 #define TOKEN_LPAREN '('
 #define TOKEN_RPAREN ')'
 #define TOKEN_NEGATIVE '!'
+#define TOKEN_EOF '.'
+#define TOKEN_FLOAT_CONST 'F'
+#define TOKEN_INTEGER_CONST 'I'
+#define TOKEN_CHAR_CONST 'C'
 
 static char *raw, *token;
 static int type;
 static size_t line = 1;
-/** Functions **/
-static void error(const char *fmt, ...)
-{
+
+static void error(const char *fmt, ...) {
     va_list ap;
-    (void)fprintf(stderr, "lamp: error: %lu - exception: %s", line, fmt);
+    (void) fprintf(stderr, "lamp exception near line: %lu \nException: %s", line, fmt);
     va_start(ap, fmt);
-    (void)fputc('\n', stderr);
+    (void) fputc('\n', stderr);
     va_end(ap);
-    (void)fputc('\n', stderr);
+    (void) fputc('\n', stderr);
     exit(1);
 }
 
@@ -92,9 +93,7 @@ static void readin(char **file)
     (void)close(fd);
 }
 
-static int
-ident(void)
-{
+static int ident(void) {
     char *p;
     size_t i, len;
 
@@ -147,14 +146,12 @@ ident(void)
         return TOKEN_WRITE;
     else if (!strcmp(token, "is"))
         return TOKEN_IS;
-
     return TOKEN_IDENTIFIER;
 }
 
-//todo: Change to static typing
 static int number(void)
 {
-    const char *errstr;
+    int type_token = TOKEN_INTEGER_CONST;
     char *p;
     size_t i, j = 0, len;
     p = raw;
@@ -173,47 +170,43 @@ static int number(void)
 
     for (i = 0; i < len; i++)
     {
-        if (isdigit(*p))
+        if (isdigit(*p) || (*p) == '.')
             token[j++] = *p;
+        if ((*p) == '.')
+        {
+            type_token = TOKEN_FLOAT_CONST;
+            ++p;
+            if (isdigit(*p))
+            {
+                token[j++] = *p;
+            }
+            else
+            {
+                error("FLOAT CONST NOT FORMATTED");
+            }
+        }
         ++p;
     }
     token[j] = '\0';
-
-    (void)strtonum(token, 0, LONG_MAX, &errstr);
-    if (errstr != NULL)
-        error("invalid number: %s", token);
-
-    return TOKEN_NUMBER;
+    return type_token;
 }
 
-/**
- * Lexer
- */
-static int comment(void)
-{
+static int comment(void) {
     int ch;
-    if ((ch = *raw++) == '/')
-    {
-        if ((ch = *raw++) == '*')
-        {
-            while ((ch = *raw++) != '*')
-            {
-                if (ch == '\0')
-                {   
+    if ((ch = *raw++) == '/') {
+        if ((ch = *raw++) == '*') {
+            while ((ch = *raw++) != '/') {
+                if (ch == '\0') {
                     error("unterminated comment");
                 }
-                if (ch == '\n')
-                {
+                if (ch == '\n') {
                     ++line;
                 }
-                if (ch == '/')
-                {
-                    return TOKEN_COMMENT;
-                }
-            
             }
         }
-        return TOKEN_QUOTIENT;
+        if (ch == '*' && (ch = *raw++) == '/') {
+            return TOKEN_COMMENT;
+        }
     }
 }
 
@@ -241,70 +234,90 @@ static int literal(void)
 
     while (*raw != '}')
         ++raw;
-    }
+
     return TOKEN_LITERAL;
 }
 
-static int lex(void)
-{
-again:
-    while (*raw == ' ' || *raw == '\t' || *raw == '\n')
-    {
-        if (*raw++ == '\n')
-        {
+static int lex(void) {
+    again:
+    while (*raw == ' ' || *raw == '\t' || *raw == '\n') {
+        if (*raw++ == '\n') {
             ++line;
         }
     }
 
-    if (isalpha(*raw))
-    {
+    if (isalpha(*raw)) {
         return ident();
     }
-    if (isdigit(*raw))
-    {
+    if (isdigit(*raw)) {
         return number();
     }
 
-    switch (*raw)
-    {
-    case '{':
-        return literal();
-    case '/':
-        if (comment() == TOKEN_COMMENT)
-            goto again;
-        return TOKEN_QUOTIENT;
-    case '=':
-        return TOKEN_ASSIGN;
-    case ',':
-        return TOKEN_COMMA;
-    case ';':
-        return TOKEN_SEMICOLON;
-    case '>':
-        return TOKEN_GREATER;
-    case '<':
-        return TOKEN_LESSER;
-    case '+':
-        return TOKEN_SUM;
-    case '-':
-        return TOKEN_MINUS;
-    case '*':
-        return TOKEN_MULTIPLY;
-    case '(':
-        return TOKEN_LPAREN;
-    case ')':
-        return TOKEN_RPAREN;
-    case '!':
-        return TOKEN_NEGATIVE;
+    switch (*raw) {
+        case '{':
+            return literal();
+        case '/':
+            if (comment() == TOKEN_COMMENT)
+                goto again;
+            return TOKEN_QUOTIENT;
+        case '=':
+            if (*++raw == '=')
+                return TOKEN_EQUALS;
+            return TOKEN_ASSIGN;
+        case ',':
+            return TOKEN_COMMA;
+        case ';':
+            return TOKEN_SEMICOLON;
+        case '>':
+            if (*++raw == '=')
+                return TOKEN_GREATER_THAN_EQUALS;
+            return TOKEN_GREATER;
+        case '<':
+            if (*++raw == '=')
+                return TOKEN_LESSER_THAN_EQUALS;
+            return TOKEN_LESSER;
+        case '+':
+            return TOKEN_SUM;
+        case '-':
+            return TOKEN_MINUS;
+        case '*':
+            return TOKEN_MULTIPLY;
+        case '(':
+            return TOKEN_LPAREN;
+        case ')':
+            return TOKEN_RPAREN;
+        case '!':
+            if (*++raw == '=')
+                return TOKEN_DIFFERENT;
+            return TOKEN_NEGATIVE;
+        case '.':
+            return TOKEN_EOF;
+        case '|':
+            if (*++raw == '|')
+                return TOKEN_OR;
+            error("OR NOT FORMATED");
+        case '&':
+            if (*++raw == '&')
+                return TOKEN_AND;
+            error("AND NOT FORMATED");
+        case '\'':
+            if(isalnum(*++raw) && (*++raw == '\''))
+                return TOKEN_CHAR_CONST;
+            error("CHARACTER NOT FORMATTED");
+        default:
+            if(strlen(raw) == 0)
+                return 0;
+            // (void) fprintf(stdout, "DEFAULTS %i\n", strlen(raw));
+            // error("MALFORMATED RAW STRING");
     }
-    return 0;
 }
 
-static void parser(HashTable* ht)
+static void parser(HashTable *ht)
 {
     while ((type = lex()) != 0)
     {
         ++raw;
-        // (void)fprintf(stdout, "Table %lu|%d\t", line, type);
+        (void)fprintf(stdout, "Token: %s - Type: %i\n", token, type);
         switch (type)
         {
         case TOKEN_IDENTIFIER:
@@ -321,9 +334,10 @@ static void parser(HashTable* ht)
         case TOKEN_THEN:
         case TOKEN_ELSE:
         case TOKEN_BEGIN:
-        case TOKEN_NUMBER:
+        case TOKEN_FLOAT_CONST:
+        case TOKEN_INTEGER_CONST:
+        case TOKEN_CHAR_CONST:
         case TOKEN_IS:
-            // (void)fprintf(stdout, "%s\n", token);
         case TOKEN_QUOTIENT:
         case TOKEN_ASSIGN:
         case TOKEN_SEMICOLON:
@@ -338,14 +352,14 @@ static void parser(HashTable* ht)
         case TOKEN_DIFFERENT:
         case TOKEN_LPAREN:
         case TOKEN_RPAREN:
-            // (void)fprintf(stdout, "%c\n", type);
             break;
         }
     }
     (void)fputc('\n', stdout);
 }
 
-static words(HashTable* ht) {
+static words(HashTable *ht)
+{
     ht_insert(ht, "program", TOKEN_PROGRAM);
     ht_insert(ht, "begin", TOKEN_BEGIN);
     ht_insert(ht, "end", TOKEN_END);
@@ -380,6 +394,7 @@ int main(int argc, char *argv[])
     parser(ht);
     free(startp);
     ht_print(ht);
+    fprintf(stdout, "\n");
     ht_free(ht);
     return 0;
 }
