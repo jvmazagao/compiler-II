@@ -5,51 +5,63 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <ctype.h>
+#include <limits.h>
+#include "hashtable.h"
 
-/** 
- * program ::= program identifier begin [decl-list] stmt-list end "."
- * decl-list ::= decl ";" { decl ";"}
- * decl ::= ident-list is type
- * ident-list ::= identifier {"," identifier}
- * type ::= int | float | char
- * stmt-list ::= stmt {";" stmt}
- * stmt ::= assign-stmt | if-stmt | while-stmt | repeat-stmt
- *  | read-stmt | write-stmt
- * assign-stmt ::= identifier "=" simple_expr
- * if-stmt ::= if condition then stmt-list end
- *  | if condition then stmt-list else stmt-list end
- * condition ::= expression
- * repeat-stmt ::= repeat stmt-list stmt-suffix
- * stmt-suffix ::= until condition
- * while-stmt ::= stmt-prefix stmt-list end
- * stmt-prefix ::= while condition do
- * read-stmt ::= read "(" identifier ")"
- * write-stmt ::= write "(" writable ")"
- * writable ::= simple-expr | literal
- * expression ::= simple-expr | simple-expr relop simple-expr
- * simple-expr ::= term | simple-expr addop term
- * term ::= factor-a | term mulop factor-a
- * fator-a ::= factor | ! factor | "-" factor
- * factor ::= identifier | constant | "(" expression ")"
- * relop ::= "==" | ">" | ">=" | "<" | "<=" | "!="
- * addop ::= "+" | "-" | ||
- * mulop ::= "*" | "/" | &&
- * constant ::= integer_const | float_const | char_const
- * **/
+#define TOKEN_PROGRAM 1
+#define TOKEN_IF 2
+#define TOKEN_THEN 3
+#define TOKEN_END 'E'
+#define TOKEN_ELSE 5
+#define TOKEN_REPEAT 6
+#define TOKEN_UNTIL 7
+#define TOKEN_WHILE 8
+#define TOKEN_DO 9
+#define TOKEN_READ 10
+#define TOKEN_WRITE 11
+#define TOKEN_FLOAT 13
+#define TOKEN_INTEGER 14
+#define TOKEN_CHARACTER 15
+#define TOKEN_LITERAL 16
+#define TOKEN_IDENTIFIER 17
+#define TOKEN_IS 18
+#define TOKEN_BEGIN 19
+#define TOKEN_COMMENT 20
+#define TOKEN_AND 'a'
+#define TOKEN_OR 'o'
+#define TOKEN_EQUALS 22
+#define TOKEN_GREATER '>'
+#define TOKEN_GREATER_THAN_EQUALS 'g'
+#define TOKEN_LESSER '<'
+#define TOKEN_LESSER_THAN_EQUALS 'l'
+#define TOKEN_DIFFERENT '!'
+#define TOKEN_SUM '+'
+#define TOKEN_MINUS '-'
+#define TOKEN_MULTIPLY '*'
+#define TOKEN_QUOTIENT '/'
+#define TOKEN_ASSIGN '='
+#define TOKEN_SEMICOLON ';'
+#define TOKEN_COMMA ','
+#define TOKEN_LPAREN '('
+#define TOKEN_RPAREN ')'
+#define TOKEN_NEGATIVE '!'
+#define TOKEN_EOF '.'
+#define TOKEN_FLOAT_CONST 'F'
+#define TOKEN_INTEGER_CONST 'I'
+#define TOKEN_CHAR_CONST 'C'
 
 static char *raw, *token;
 static int type;
 static size_t line = 1;
 
-/** Functions **/
-static void error(const char *fmt, ...)
-{
+static void error(const char *fmt, ...) {
     va_list ap;
-    (void)fprintf(stderr, "lamp: error: %lu", line);
+    (void) fprintf(stderr, "lamp exception near line: %lu \nException: %s", line, fmt);
     va_start(ap, fmt);
-    (void)fputc('\n', stderr);
+    (void) fputc('\n', stderr);
     va_end(ap);
-    (void)fputc('\n', stderr);
+    (void) fputc('\n', stderr);
     exit(1);
 }
 
@@ -81,71 +93,289 @@ static void readin(char **file)
     (void)close(fd);
 }
 
-/**
- * Lexer
- */
-// TODO: Remover comentarios
-static void comment(void)
+static int ident(void) {
+    char *p;
+    size_t i, len;
+
+    p = raw;
+    while (isalnum(*raw) || *raw == '_')
+        ++raw;
+
+    len = raw - p;
+
+    --raw;
+
+    free(token);
+
+    if ((token = malloc(len + 1)) == NULL)
+        error("malloc failed");
+
+    for (i = 0; i < len; i++)
+        token[i] = *p++;
+    token[i] = '\0';
+
+    if (!strcmp(token, "float"))
+        return TOKEN_FLOAT;
+    else if (!strcmp(token, "int"))
+        return TOKEN_INTEGER;
+    else if (!strcmp(token, "char"))
+        return TOKEN_CHARACTER;
+    else if (!strcmp(token, "program"))
+        return TOKEN_PROGRAM;
+    else if (!strcmp(token, "begin"))
+        return TOKEN_BEGIN;
+    else if (!strcmp(token, "end"))
+        return TOKEN_END;
+    else if (!strcmp(token, "if"))
+        return TOKEN_IF;
+    else if (!strcmp(token, "then"))
+        return TOKEN_THEN;
+    else if (!strcmp(token, "while"))
+        return TOKEN_WHILE;
+    else if (!strcmp(token, "do"))
+        return TOKEN_DO;
+    else if (!strcmp(token, "else"))
+        return TOKEN_ELSE;
+    else if (!strcmp(token, "repeat"))
+        return TOKEN_REPEAT;
+    else if (!strcmp(token, "until"))
+        return TOKEN_UNTIL;
+    else if (!strcmp(token, "read"))
+        return TOKEN_READ;
+    else if (!strcmp(token, "write"))
+        return TOKEN_WRITE;
+    else if (!strcmp(token, "is"))
+        return TOKEN_IS;
+    return TOKEN_IDENTIFIER;
+}
+
+static int number(void)
 {
-    int ch;
-    if ((ch = *raw++) == '/')
+    int type_token = TOKEN_INTEGER_CONST;
+    char *p;
+    size_t i, j = 0, len;
+    p = raw;
+    while (isdigit(*raw) || (*raw) == '.')
     {
-        fputs("Comment /\n", stdout);
-        if ((ch = *raw++) == '*')
+        ++raw;
+    }
+    len = raw - p;
+
+    --raw;
+
+    free(token);
+
+    if ((token = malloc(len + 1)) == NULL)
+        error("malloc failed");
+
+    for (i = 0; i < len; i++)
+    {
+        if (isdigit(*p) || (*p) == '.')
+            token[j++] = *p;
+        if ((*p) == '.')
         {
-            fputs("Comment *\n", stdout);
-            while ((ch = *raw++))
+            type_token = TOKEN_FLOAT_CONST;
+            ++p;
+            if (isdigit(*p))
             {
-                if (ch == '\0')
-                {
+                token[j++] = *p;
+            }
+            else
+            {
+                error("FLOAT CONST NOT FORMATTED");
+            }
+        }
+        ++p;
+    }
+    token[j] = '\0';
+    return type_token;
+}
+
+static int comment(void) {
+    int ch;
+    if ((ch = *raw++) == '/') {
+        if ((ch = *raw++) == '*') {
+            while ((ch = *raw++) != '/') {
+                if (ch == '\0') {
                     error("unterminated comment");
                 }
-
-                if (ch == '\n')
-                {
+                if (ch == '\n') {
                     ++line;
-                }
-                if (ch == '*')
-                {
-                    ch = *raw++;
-                    fputs("Comment *\n", stdout);
-                    if (ch == '/')
-                    {
-                        fputs("Comment /\n", stdout);
-                        break;
-                    }
                 }
             }
         }
+        if (ch == '*' && (ch = *raw++) == '/') {
+            return TOKEN_COMMENT;
+        }
     }
 }
 
-static int lex(void)
+static int literal(void)
 {
-again:
-    while (*raw == ' ' || *raw == '\t' || *raw == '\n')
-    {
-        if (*raw++ == '\n')
-        {
+    char *p;
+    size_t i, len;
+
+    p = ++raw;
+    while (isalnum(*raw) || *raw != '}')
+        ++raw;
+
+    len = raw - p;
+
+    --raw;
+
+    free(token);
+
+    if ((token = malloc(len + 1)) == NULL)
+        error("malloc failed");
+
+    for (i = 0; i < len; i++)
+        token[i] = *p++;
+    token[i] = '\0';
+
+    while (*raw != '}')
+        ++raw;
+
+    return TOKEN_LITERAL;
+}
+
+static int lex(void) {
+    again:
+    while (*raw == ' ' || *raw == '\t' || *raw == '\n') {
+        if (*raw++ == '\n') {
             ++line;
         }
     }
-    switch (*raw)
-    {
-    case '/':
-        comment();
-        goto again;
+
+    if (isalpha(*raw)) {
+        return ident();
+    }
+    if (isdigit(*raw)) {
+        return number();
+    }
+
+    switch (*raw) {
+        case '{':
+            return literal();
+        case '/':
+            if (comment() == TOKEN_COMMENT)
+                goto again;
+            return TOKEN_QUOTIENT;
+        case '=':
+            if (*++raw == '=')
+                return TOKEN_EQUALS;
+            return TOKEN_ASSIGN;
+        case ',':
+            return TOKEN_COMMA;
+        case ';':
+            return TOKEN_SEMICOLON;
+        case '>':
+            if (*++raw == '=')
+                return TOKEN_GREATER_THAN_EQUALS;
+            return TOKEN_GREATER;
+        case '<':
+            if (*++raw == '=')
+                return TOKEN_LESSER_THAN_EQUALS;
+            return TOKEN_LESSER;
+        case '+':
+            return TOKEN_SUM;
+        case '-':
+            return TOKEN_MINUS;
+        case '*':
+            return TOKEN_MULTIPLY;
+        case '(':
+            return TOKEN_LPAREN;
+        case ')':
+            return TOKEN_RPAREN;
+        case '!':
+            if (*++raw == '=')
+                return TOKEN_DIFFERENT;
+            return TOKEN_NEGATIVE;
+        case '.':
+            return TOKEN_EOF;
+        case '|':
+            if (*++raw == '|')
+                return TOKEN_OR;
+            error("OR NOT FORMATED");
+        case '&':
+            if (*++raw == '&')
+                return TOKEN_AND;
+            error("AND NOT FORMATED");
+        case '\'':
+            if(isalnum(*++raw) && (*++raw == '\''))
+                return TOKEN_CHAR_CONST;
+            error("CHARACTER NOT FORMATTED");
+        default:
+            if(strlen(raw) == 0)
+                return 0;
+            // (void) fprintf(stdout, "DEFAULTS %i\n", strlen(raw));
+            // error("MALFORMATED RAW STRING");
     }
 }
 
-static void parser(void)
+static void parser(HashTable *ht)
 {
     while ((type = lex()) != 0)
     {
         ++raw;
-        (void)fprintf(stdout, "%lu|%d\t", line, type);
+        (void)fprintf(stdout, "Token: %s - Type: %i\n", token, type);
+        switch (type)
+        {
+        case TOKEN_IDENTIFIER:
+            ht_insert(ht, token, TOKEN_IDENTIFIER);
+            break;
+        case TOKEN_LITERAL:
+        case TOKEN_INTEGER:
+        case TOKEN_PROGRAM:
+        case TOKEN_FLOAT:
+        case TOKEN_READ:
+        case TOKEN_WRITE:
+        case TOKEN_END:
+        case TOKEN_IF:
+        case TOKEN_THEN:
+        case TOKEN_ELSE:
+        case TOKEN_BEGIN:
+        case TOKEN_FLOAT_CONST:
+        case TOKEN_INTEGER_CONST:
+        case TOKEN_CHAR_CONST:
+        case TOKEN_IS:
+        case TOKEN_QUOTIENT:
+        case TOKEN_ASSIGN:
+        case TOKEN_SEMICOLON:
+        case TOKEN_COMMA:
+        case TOKEN_MULTIPLY:
+        case TOKEN_SUM:
+        case TOKEN_MINUS:
+        case TOKEN_LESSER:
+        case TOKEN_LESSER_THAN_EQUALS:
+        case TOKEN_GREATER:
+        case TOKEN_GREATER_THAN_EQUALS:
+        case TOKEN_DIFFERENT:
+        case TOKEN_LPAREN:
+        case TOKEN_RPAREN:
+            break;
+        }
     }
     (void)fputc('\n', stdout);
+}
+
+static words(HashTable *ht)
+{
+    ht_insert(ht, "program", TOKEN_PROGRAM);
+    ht_insert(ht, "begin", TOKEN_BEGIN);
+    ht_insert(ht, "end", TOKEN_END);
+    ht_insert(ht, "is", TOKEN_IS);
+    ht_insert(ht, "int", TOKEN_INTEGER);
+    ht_insert(ht, "float", TOKEN_FLOAT);
+    ht_insert(ht, "char", TOKEN_CHARACTER);
+    ht_insert(ht, "if", TOKEN_IF);
+    ht_insert(ht, "then", TOKEN_THEN);
+    ht_insert(ht, "else", TOKEN_ELSE);
+    ht_insert(ht, "repeat", TOKEN_REPEAT);
+    ht_insert(ht, "until", TOKEN_UNTIL);
+    ht_insert(ht, "while", TOKEN_WHILE);
+    ht_insert(ht, "do", TOKEN_DO);
+    ht_insert(ht, "read", TOKEN_READ);
+    ht_insert(ht, "write", TOKEN_WRITE);
 }
 
 int main(int argc, char *argv[])
@@ -156,10 +386,15 @@ int main(int argc, char *argv[])
         fputs("execution: main *.lamp file\n", stderr);
         exit(1);
     }
+    HashTable *ht = ht_create(3);
+    words(ht);
     readin(argv[1]);
 
     startp = raw;
-    parser();
+    parser(ht);
     free(startp);
+    ht_print(ht);
+    fprintf(stdout, "\n");
+    ht_free(ht);
     return 0;
 }
