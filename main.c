@@ -391,7 +391,7 @@ identifier:
         ht_insert(ht, token, TOKEN_IDENTIFIER);
     }
     if (type == TOKEN_ASSIGN)
-    {   
+    {
         expect(TOKEN_ASSIGN);
         goto simple_expr;
     }
@@ -415,7 +415,7 @@ type_assign:
     {
         goto stmt_list;
     }
-
+    expect(TOKEN_SEMICOLON);
     goto decl_list;
 
 stmt_list:
@@ -543,7 +543,6 @@ write_stmt:
     case TOKEN_WRITE:
         expect(TOKEN_WRITE);
         expect(TOKEN_LPAREN);
-        write_state = true;
         goto writable;
     default:
         goto stmt_list;
@@ -554,7 +553,10 @@ writable:
     {
     case TOKEN_LITERAL:
         expect(TOKEN_LITERAL);
+        expect(TOKEN_RPAREN);
+        goto stmt;
     default:
+        write_state = true;
         goto simple_expr;
     }
 
@@ -587,9 +589,18 @@ simple_expr:
         expect(TOKEN_LPAREN);
         goto simple_expr;
     case TOKEN_RPAREN:
+        if (write_state == true)
+        {   
+            write_state = false;
+        }
         expect(TOKEN_RPAREN);
         goto simple_expr;
     default:
+        if (write_state == true)
+        {
+            expect(TOKEN_RPAREN);
+            write_state = false;
+        }
         goto stmt_list;
     }
 
@@ -655,11 +666,10 @@ constants:
         goto operator;
     case TOKEN_CHAR_CONST:
         expect(TOKEN_CHAR_CONST);
-         goto operator;
+        goto operator;
     }
 
-    operator: 
-    switch(type)
+    operator: switch(type)
     {
     case TOKEN_SUM:
     case TOKEN_MINUS:
@@ -676,8 +686,12 @@ constants:
     case TOKEN_GREATER_THAN_EQUALS:
     case TOKEN_DIFFERENT:
         goto relop;
-    default:
+    case TOKEN_LPAREN:
+    case TOKEN_RPAREN:
         goto simple_expr;
+    default:
+        expect(TOKEN_SEMICOLON);
+        goto stmt;
     }
 
 program:

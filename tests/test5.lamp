@@ -3,8 +3,6 @@ program teste4
 begin
  pontuacao, pontuacaoMaxina, disponibilidade is int;
  pontuacaoMinima is char;
- pontuacao, pontuacaoMaxina, disponibilidade is int;
- pontuacaoMinima is char;
  pontuacaoMinima = 50;
  pontuacaoMaxima = 100;
  write({Pontuacao do candidato: });
@@ -12,11 +10,11 @@ begin
  write({Disponibilidade do candidato: });
  read(disponibilidade);
 
- while ((pontuacao>0) && (pontuacao<=pontuacaoMaxima)) do
+ while (pontuacao>0) && (pontuacao<=pontuacaoMaxima) do
  if ((pontuacao > pontuacaoMinima) && (disponibilidade==1)) then
  write({Candidato aprovado.});
  else
- write({Candidato reprovado.});
+ write({Candidato reprovado.})
  end
  write({Pontuacao do candidato: });
  read(pontuacao);

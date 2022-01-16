@@ -43,17 +43,13 @@ Encontramos um erro de interpretação na forma como o comentário era lido e n�
 
 ## Mudanças na gramatica
 Não fora necessários nenhuma mudanças na gramática, porém os casos de testes foram modificados.
-### Caso 1:
-Varios casos de testes de encontravam com a declaração de suas variáveis antes do token `begin`, porem a instrução da gramática mostrava que, essas declarações deveriam vir após o `begin`.
 
-### Caso 2:
-Varios casos de testes não continham o token terminal `.` que significava o fim da execução do arquivo, com isso retornando o valor integral. 
+## Teste de compilação
+A execução de todos os testes serão executados e verificados se existe algum erro. 
+> Todos os testes serão executados com base nos arquivos da entrega 1.
 
-### Caso 3:
-Varios leques de `;` não fechavam os blocos e com isso incrementamos os tokens e o codigo compilou normalmente. 
-
-#### Test 1
-O teste original tinha como codigo
+### Teste 1
+O arquivo de teste inicial contém o seguinte conteudo no inicio da compilação:
 ```
 /* Test */
 program teste1
@@ -63,29 +59,49 @@ begin
     write(a+b);
 end
 ```
-Apresenta erros de sintaxe na linha três, que logo em seguida do nome do programa deve começar com `begin`.
 
-Resposta do compilador
 ```
 ./main tests/test1.lamp
-lamp: error: 3 - exception: syntax error
-```
-Correção do caso de teste:
-```
-/* Test */
-program teste1
-begin
-    a is int;
+type: 
+match: 
+type 17 not match with 19 ()
+TOKEN: a
+RAW:  is int;
     b is float;
+begin
     write(a+b);
 end
+lamp exception near line: 3 
+Exception: syntax error
+
+Makefile:19: recipe for target 'run' failed
+make: [run] Error 1 (ignored)
 ```
-Apresenta um erro de sintaxe no final do arquivo na linha 7, falta o simbolo terminal `.`.
+> O teste 1, que fora criado por nosso grupo, contém um erro na declaração da linguagem. Onde o token `begin` deve estar logo em seguinda no nome do arquivo de teste.
+
+#### Correção
+
 ```
 ./main tests/test1.lamp
-lamp: error: 7 - exception: syntax error
+type: 
+match: .
+type 0 not match with 46 ()
+TOKEN: end
+RAW: 
+lamp exception near line: 7 
+Exception: syntax error
+
+Makefile:19: recipe for target 'run' failed
+make: [run] Error 1 (ignored)
 ```
-Correção do caso de teste:
+> Agora o erro encontrado, é por causa da falta do sinal terminal `.` que se encontra no fim do arquivo. 
+
+#### Correção
+```
+./main tests/test1.lamp
+Compilation Succesfull. Exiting
+```
+O arquivo corrigido fica:
 ```
 /* Test */
 program teste1
@@ -94,8 +110,9 @@ begin
     b is float;
     write(a+b);
 end.
-```#### Test 2
-O teste original tinha como codigo
+```
+### Teste 2
+O arquivo de teste contém o seguinte conteudo no inicio da compilação:
 ```
 program teste1
  a, b is int;
@@ -103,7 +120,7 @@ program teste1
  a,x is float;
 begin
  a = 12a;
- x = 12.;
+ x = 12.0;
  read (a);
  read (b);
  read (c)
@@ -112,23 +129,20 @@ begin
  write (result);
 end.
 ```
-Apresenta erros de sintaxe na linha três, que logo em seguida do nome do programa deve começar com `begin`.
-
-Resposta do compilador
-```
-./main tests/test1.lamp
-lamp: error: 2 - exception: syntax error
-```
-Correção do caso de teste:
+> O teste 2 contém um erro na declaração inicial. Onde o token `begin` deve estar logo em seguinda no nome do arquivo de teste.
 
 ```
-program teste1
-begin
- a, b is int;
+./main tests/test2.lamp
+type: 
+match: 
+type 17 not match with 19 ()
+TOKEN: a
+RAW: , b is int;
  result is int;
  a,x is float;
+begin
  a = 12a;
- x = 12.;
+ x = 12.0;
  read (a);
  read (b);
  read (c)
@@ -136,52 +150,74 @@ begin
  write {Resultado: };
  write (result);
 end.
-```
-Apresenta a falta de um `;` na linha 10, que é apresentado como linha 11 (existe uma possibilidade de melhorria para mostrar a linha correta). 
+lamp exception near line: 2 
+Exception: syntax error
 
-Resposta do compilador
+Makefile:19: recipe for target 'run' failed
+make: [run] Error 1 (ignored)
 ```
-./main tests/test1.lamp
-lamp: error: 11 - exception: syntax error
-```
-
-Correção do caso de teste:
+#### Correção
+> Encontra-se um erro na atribuição `a = 12a`. Sendo que deve conter um valor de operação. 
 
 ```
-program teste1
-begin
- a, b is int;
- result is int;
- a,x is float;
- a = 12a;
- x = 12.;
- read (a);
-
- read (b);
- read (c);
- result = (a*b + 1) / (c+2);
+./main tests/test2.lamp
+type: 
+match: ;
+type 17 not match with 59 ()
+TOKEN: result
+RAW:  = (a*b + 1) / (c+2);
  write {Resultado: };
  write (result);
 end.
-```
+lamp exception near line: 11 
+Exception: syntax error
 
-Apresenta a falta de abertura e fechamento de parenteses na linha 12.
-
-Resposta do compilador
+Makefile:19: recipe for target 'run' failed
+make: [run] Error 1 (ignored)
 ```
-./main tests/test1.lamp
-lamp: error: 11 - exception: syntax error
+> Encontra-se com falta de `;` no fim da linha 10 - precisa de uma melhoria de leitura de tokens para mostrar a linha correta.
 ```
+./main tests/test2.lamp
+type: 
+match: (
+type 16 not match with 40 ()
+TOKEN: Resultado: 
+RAW: ;
+ write (result);
+end.
+lamp exception near line: 12 
+Exception: syntax error
 
-Correção do codigo:
+Makefile:19: recipe for target 'run' failed
+make: [run] Error 1 (ignored)
+```
+> Encontra-se com falta do simbolo inicial de parentese para começar a definição do write. 
+```
+./main tests/test2.lamp
+type: ;
+match: )
+type 59 not match with 41 (;)
+TOKEN: Resultado: 
+RAW: 
+ write (result);
+end.
+lamp exception near line: 12 
+Exception: syntax error
+
+Makefile:19: recipe for target 'run' failed
+make: [run] Error 1 (ignored)
+```
+> Encontra-se com falta do simbolo final de parentese para começar a definição do write. 
+#### Conclusão 
+O codigo para ser compilado, ficará na seguinte forma e compilará corretamente.
 ```
 program teste1
 begin
  a, b is int;
  result is int;
  a,x is float;
- a = 12a;
- x = 12.;
+ a = 12*a;
+ x = 12.0;
  read (a);
  read (b);
  read (c);
@@ -190,9 +226,13 @@ begin
  write (result);
 end.
 ```
-Compilação ocorre normalmente.
-
-#### Test 3
+Saída do compilador.
+```
+./main tests/test2.lamp
+Compilation Succesfull. Exiting
+```
+### Teste 3
+O arquivo de teste contém o seguinte conteudo no inicio da compilação:
 ```
 program teste2
  a, b, c:int;
@@ -207,17 +247,14 @@ program teste2
  write (val)
 end.
 ```
-Erro de compilação na linha 2, falta o `begin` após o nome do arquivo.
-
+### Correção
 ```
 ./main tests/test3.lamp
-lamp: error: 2 - exception: syntax error
-```
-Correção e recompilação:
-```
-program teste2
-begin
- a, b, c:int;
+type: 
+match: 
+type 17 not match with 19 ()
+TOKEN: a
+RAW: , b, c:int;
  d, _var: float;
  teste2 = 1;
  Read (a);
@@ -228,21 +265,47 @@ begin
  c = val + 2.2 + a;
  write (val)
 end.
-```
-Erro de compilação na linha 2. Declaração de variável errada, `c:int`.
+lamp exception near line: 2 
+Exception: syntax error
 
+Makefile:19: recipe for target 'run' failed
+make: [run] Error 1 (ignored)
+```
+> Ocorre o priemeiro erro de compilação, que é a falta de `begin` na compilação.
 ```
 ./main tests/test3.lamp
-lamp: error: 3 - exception: syntax error
+lamp exception near line: 3 
+Exception: MALFORMATED RAW STRING
+
+Makefile:19: recipe for target 'run' failed
+make: [run] Error 1 (ignored)
 ```
-Correção e recompilação:
+> Erro generico, que no caso mostra que a declaração da variável está errado. 
 ```
-program teste2
-begin
- a, b, c is int;
- d, var: float;
- teste2 = 1;
- Read (a);
+./main tests/test3.lamp
+lamp exception near line: 4 
+Exception: MALFORMATED RAW STRING
+
+Makefile:19: recipe for target 'run' failed
+make: [run] Error 1 (ignored)
+```
+> Erro generico, que no caso mostra que a declaração da variável está errado. 
+```
+./main tests/test3.lamp
+lamp exception near line: 4 
+Exception: MALFORMATED RAW STRING
+
+Makefile:19: recipe for target 'run' failed
+make: [run] Error 1 (ignored)
+```
+> Erro generico, que no caso mostra que a declaração da variável está errado. 
+```
+./main tests/test3.lamp
+type: (
+match: 
+type 40 not match with 17 (()
+TOKEN: Read
+RAW: a);
  b = a * a;
  c = b + a/2 * (35/b);
  write c;
@@ -250,245 +313,146 @@ begin
  c = val + 2.2 + a;
  write (val)
 end.
-```
-Erro de compilação na linha 4. Declaração de variável errada, `_var: float`.
-
-```
-./main tests/test3.lamp
-lamp: error: 4 - exception: syntax error
-```
-Correção e recompilação:
-```
-program teste2
-begin
- a, b, c is int;
- d, var is float;
- teste2 = 1;
- Read (a);
- b = a * a;
- c = b + a/2 * (35/b);
- write c;
- val := 34.2
- c = val + 2.2 + a;
- write (val)
-end.
-```
-Erro de compilação na linha 4. Declaração de variável errada, `var: float`.
-
-```
-./main tests/test3.lamp
-lamp: error: 4 - exception: syntax error
-```
-
-Correção e recompilação:
-```
-program teste2
-begin
- a, b, c is int;
- d, var is float;
- teste2 = 1;
- Read (a);
- b = a * a;
- c = b + a/2 * (35/b);
- write c;
- val := 34.2
- c = val + 2.2 + a;
- write (val)
-end.
-```
-Erro de compilação na linha 6. Sintaxe do `Read` está incorreta.
-
-```
-./main tests/test3.lamp
-lamp: error: 6 - exception: syntax error
-```
-
-Correção e recompilação:
-```
-program teste2
-begin
- a, b, c is int;
- d, var is float;
- teste2 = 1;
- read (a);
- b = a * a;
- c = b + a/2 * (35/b);
- write c;
- val := 34.2
- c = val + 2.2 + a;
- write (val)
-end.
-```
-Erro de compilação na linha 9. Sintaxe do `write` está incorreta faltando parenteses.
-
-```
-./main tests/test3.lamp
-lamp: error: 9 - exception: syntax error
-```
-Correção e recompilação:
-```
-program teste2
-begin
- a, b, c is int;
- d, var is float;
- teste2 = 1;
- read (a);
- b = a * a;
- c = b + a/2 * (35/b);
- write (c);
- val := 34.2
- c = val + 2.2 + a;
- write (val)
-end.
-```
-Erro de compilação na linha 10. Sintaxe do `assign (:=)` está errada.
-
-```
-./main tests/test3.lamp
-lamp: error: 10 - exception: syntax error
-```
-Correção e recompilação:
-```
-program teste2
-begin
- a, b, c is int;
- d, var is float;
- teste2 = 1;
- read (a);
- b = a * a;
- c = b + a/2 * (35/b);
- write (c);
- val := 34.2
- c = val + 2.2 + a;
- write (val)
-end.
-```
-Erro de compilação na linha 10. Falta `;`.
-
-```
-./main tests/test3.lamp
-lamp: error: 10 - exception: syntax error
-```
-
-Compilação ocorre normalmente.
-
-#### Test 4
-
-```
- program
- a, aux is int;
- b is float
- begin
- b = 0;
- in (a);
- in(b);
- if (a>b) then
- aux = b;
- b = a;
- a = aux
- end;
- write(a;
- write(b)
-```
-
-Error: Falta de identifier - nome do programa.
-```
-./main tests/test4.lamp
-lamp: error: 2 - exception: syntax error
-```
-
-Correção e recompilação
-
-
-```
- program test4
- a, aux is int;
- b is float
- begin
- b = 0;
- in (a);
- in(b);
- if (a>b) then
- aux = b;
- b = a;
- a = aux
- end;
- write(a;
- write(b)
-```
-
-Error: Falta de `begin` após `identifier`
-```
-./main tests/test4.lamp
-lamp: error: 2 - exception: syntax error
-
-```
-
-Correção e recompilação
-
-```
- program test4
- a, aux is int;
- b is float;
- begin
- b = 0
- in (a);
- in(b);
- if (a>b) then
- aux = b;
- b = a;
- a = aux
- end;
- write(a;
- write(b)
-```
-
-> Vi uma oportunidade de fazer uma melhoria na forma como a exceção estava sendo mostrada, sendo assim, apartir desse memomento a exceção fica mais limpa e mais facil a leitura. Podendo assim melhorar a implementação.
-
-Error: Falta de `;`
-```
-./main tests/test4.lamp
-lamp exception near line: 5 
-Exception: Syntax error near token: b
-```
-
-
-Correção e recompilação
-
-```
- program test4
- a, aux is int;
- b is float;
- begin
- b = 0;
- in (a);
- in(b);
- if (a>b) then
- aux = b;
- b = a;
- a = aux
- end;
- write(a;
- write(b)
-```
-
-Error: O uso de in nesse contexto é errado. Fora substituido por `read`.
-
-```
-./main tests/test4.lamp
 lamp exception near line: 6 
-Exception: Syntax error near token: in
+Exception: syntax error
+
+Makefile:19: recipe for target 'run' failed
+make: [run] Error 1 (ignored)
+```
+> Acontece um erro no token `read` que se encontra com R maiusculo. 
+```
+./main tests/test3.lamp
+type: 
+match: (
+type 17 not match with 40 ()
+TOKEN: c
+RAW: ;
+ val := 34.2
+ c = val + 2.2 + a;
+ write (val)
+end.
+lamp exception near line: 9 
+Exception: syntax error
+
+Makefile:19: recipe for target 'run' failed
+make: [run] Error 1 (ignored)
+```
+> O identificador write se encontra mal formatado, faltando primeiro parentese.
+```
+./main tests/test3.lamp
+type: ;
+match: )
+type 59 not match with 41 (;)
+TOKEN: c
+RAW: 
+ val := 34.2
+ c = val + 2.2 + a;
+ write (val)
+end.
+lamp exception near line: 9 
+Exception: syntax error
+
+Makefile:19: recipe for target 'run' failed
+make: [run] Error 1 (ignored)
+``` 
+> O identificador write se encontra mal formatado, Faltando o parentese de fechamento.
+```
+./main tests/test3.lamp
+lamp exception near line: 10 
+Exception: MALFORMATED RAW STRING
+
+Makefile:19: recipe for target 'run' failed
+make: [run] Error 1 (ignored)
+```
+> Erro na atribuição da variável.
+```
+./main tests/test3.lamp
+type: 
+match: ;
+type 17 not match with 59 ()
+TOKEN: c
+RAW:  = val + 2.2 + a;
+ write (val)
+end.
+lamp exception near line: 11 
+Exception: syntax error
+
+Makefile:19: recipe for target 'run' failed
+make: [run] Error 1 (ignored)
+```
+> Falta de simbolo terminal `;`
+```
+./main tests/test3.lamp
+type: 
+match: ;
+type 17 not match with 59 ()
+TOKEN: c
+RAW:  = val + 2.2 + a;
+ write (val)
+end.
+lamp exception near line: 12
+Exception: syntax error
+
+Makefile:19: recipe for target 'run' failed
+make: [run] Error 1 (ignored)
+```
+> Falta de `;`
+#### Conclusão
+O codigo a ser compilado será:
+```
+program teste2
+begin
+ a, b, c is int;
+ d, var is float;
+ teste2 = 1;
+ read (a);
+ b = a * a;
+ c = b + a/2 * (35/b);
+ write (c);
+ val = 34.2;
+ c = val + 2.2 + a;
+ write (val);
+end.
+```
+Após todas as correções e retornará 
+```
+test3.lamp... 
+Compilation Succesfull. Exiting
 ```
 
-Correção e recompilação
+### Teste 4
+O arquivo de teste contém o seguinte conteudo no inicio da compilação:
+```  ​
+program
+​a, aux is int;
+​b is float
+​begin
+​b = 0;
+​in (a);
+​in(b);
+​if (a>b) then
+​aux = b;
+​b = a;
+​a = aux
+​end;
+​write(a;
+​write(b)
 
 ```
- program test4
- a, aux is int;
- b is float;
+
+### Correções
+> Primeiro erro encontrado é a falta de nome no progama. 
+```
+./main tests/test4.lamp
+type: ,
+match: 
+type 44 not match with 19 (,)
+TOKEN: a
+RAW:  aux is int;
+ b is float
  begin
  b = 0;
- read(a);
+ in (a);
  in(b);
  if (a>b) then
  aux = b;
@@ -497,26 +461,27 @@ Correção e recompilação
  end;
  write(a;
  write(b)
+lamp exception near line: 2 
+Exception: syntax error
+
+Makefile:19: recipe for target 'run' failed
+make: [run] Error 1 (ignored)
 ```
 
-Error: O uso de in nesse contexto é errado. Fora substituido por `read`.
+> Ordem da compilação, a falta de begin após o nome do programa
 
 ```
 ./main tests/test4.lamp
-lamp exception near line: 7
-Exception: Syntax error near token: in
-```
-
-Correção e recompilação
-
-```
- program test4
- a, aux is int;
- b is float;
+type: 
+match: 
+type 17 not match with 19 ()
+TOKEN: a
+RAW: , aux is int;
+ b is float
  begin
  b = 0;
- read(a);
- read(b);
+ in (a);
+ in(b);
  if (a>b) then
  aux = b;
  b = a;
@@ -524,25 +489,23 @@ Correção e recompilação
  end;
  write(a;
  write(b)
+lamp exception near line: 2 
+Exception: syntax error
+
+Makefile:19: recipe for target 'run' failed
+make: [run] Error 1 (ignored)
 ```
 
-Error: O uso de in nesse contexto é errado. Fora substituido por `read`.
-
+> Falta de `;`
 ```
 ./main tests/test4.lamp
-lamp exception near line: 7
-Exception: Syntax error near token: in
-```
-Correção e recompilação
-
-```
- program test4
- a, aux is int;
- b is float;
- begin
- b = 0;
- read(a);
- read(b);
+type: 
+match: ;
+type 17 not match with 59 ()
+TOKEN: b
+RAW:  = 0;
+ in (a);
+ in(b);
  if (a>b) then
  aux = b;
  b = a;
@@ -550,118 +513,138 @@ Correção e recompilação
  end;
  write(a;
  write(b)
+lamp exception near line: 5 
+Exception: syntax error
+
+Makefile:19: recipe for target 'run' failed
+make: [run] Error 1 (ignored)
 ```
-Falta de `;`
+> Token inexistente `in` que será trocado por `read`
 ```
 ./main tests/test4.lamp
-lamp exception near line: 12
-Exception: Syntax error near token: end
-```
-Correção e recompilação
-
-```
- program test4
- a, aux is int;
- b is float;
- begin
- b = 0;
- read(a);
- read(b);
+type: (
+match: 
+type 40 not match with 17 (()
+TOKEN: in
+RAW: a);
+ in(b);
  if (a>b) then
  aux = b;
  b = a;
- a = aux;
+ a = aux
  end;
  write(a;
  write(b)
+lamp exception near line: 6 
+Exception: syntax error
+
+Makefile:19: recipe for target 'run' failed
+make: [run] Error 1 (ignored)
 ```
-Uso de `;`
+
+> Token inexistente `in` que será trocado por `read`
 ```
 ./main tests/test4.lamp
-lamp exception near line: 12
-Exception: Syntax error near token: end
-```
-```
-Correção e recompilação
-
-```
- program test4
- a, aux is int;
- b is float;
- begin
- b = 0;
- read(a);
- read(b);
+type: (
+match: 
+type 40 not match with 17 (()
+TOKEN: in
+RAW: b);
  if (a>b) then
  aux = b;
  b = a;
- a = aux;
- end
+ a = aux
+ end;
  write(a;
  write(b)
+lamp exception near line: 7 
+Exception: syntax error
+
+Makefile:19: recipe for target 'run' failed
+make: [run] Error 1 (ignored)
 ```
-Falta de `)`
+> Falta de `;`
 ```
 ./main tests/test4.lamp
+type: ;
+match: )
+type 59 not match with 41 (;)
+TOKEN: a
+RAW: 
+ write(b)
+lamp exception near line: 12 
+Exception: syntax error
+
+Makefile:19: recipe for target 'run' failed
+make: [run] Error 1 (ignored)
+
+```
+> Falta de parentese no write
+```
+./main tests/test4.lamp
+type: ;
+match: )
+type 59 not match with 41 (;)
+TOKEN: a
+RAW: 
+ write(b)
+lamp exception near line: 13 
+Exception: syntax error
+
+Makefile:19: recipe for target 'run' failed
+make: [run] Error 1 (ignored)
+
+```
+
+> `;` sendo usado incorretamente;
+```
+./main tests/test4.lamp
+type: 
+match: write
+type 0 not match with 59 ()
+TOKEN: b
+RAW: 
 lamp exception near line: 13
-Exception: Syntax error near token: write
-```
+Exception: syntax error
 
-Correção e recompilação
-
+Makefile:19: recipe for target 'run' failed
+make: [run] Error 1 (ignored)
 ```
- program test4
- a, aux is int;
- b is float;
- begin
- b = 0;
- read(a);
- read(b);
- if (a>b) then
- aux = b;
- b = a;
- a = aux;
- end
- write(a);
- write(b);
-```
-Falta de `;`
+> Falta de `;`
 ```
 ./main tests/test4.lamp
-lamp exception near line: 14
-Exception: Syntax error near token: write
-```
+type: 
+match: ;
+type 0 not match with 59 ()
+TOKEN: b
+RAW: 
+lamp exception near line: 14 
+Exception: syntax error
 
-Correção e recompilação
-
+Makefile:19: recipe for target 'run' failed
+make: [run] Error 1 (ignored)
 ```
- program test4
- a, aux is int;
- b is float;
- begin
- b = 0;
- read(a);
- read(b);
- if (a>b) then
- aux = b;
- b = a;
- a = aux;
- end
- write(a);
- write(b);
-```
-Loop infinito por causa da falta de end.
+> Falta de `end.`
 ```
 ./main tests/test4.lamp
-```
+type: 
+match: ;
+type 0 not match with 59 ()
+TOKEN: b
+RAW: 
+lamp exception near line: 14 
+Exception: syntax error
 
-Correção e recompilação
-
+Makefile:19: recipe for target 'run' failed
+make: [run] Error 1 (ignored)
 ```
- program test4
+#### Conclusão
+O teste finalisado se encontra:
+```
+program test4
+ begin
  a, aux is int;
  b is float;
- begin
  b = 0;
  read(a);
  read(b);
@@ -674,12 +657,13 @@ Correção e recompilação
  write(b);
  end.
 ```
+Compilando corretamente.
 
-#### Test 5
-
+### Teste 5
+O arquivo de teste contém o seguinte conteudo no inicio da compilação:
 ```
 programa teste4
-/* Teste4 do meu compilador
+/* Teste4 do meu compilador */
  pontuacao, pontuacaoMaxina, disponibilidade is inteiro;
  pontuacaoMinima is char;
 begin
@@ -703,114 +687,205 @@ begin
  end
 end
 ```
-Erro
+> Linha 1 contém o nome `programa` ao invés de `program`
 ```
+./main tests/test5.lamp
+type: 
+match: 
+type 17 not match with 1 ()
+TOKEN: programa
+RAW:  teste4
+/* Teste4 do meu compilador */
+ pontuacao, pontuacaoMaxina, disponibilidade is inteiro;
+ pontuacaoMinima is char;
+begin
+ pontuacaoMinima = 50;
+ pontuacaoMaxima = 100;
+ write({Pontuacao do candidato: });
+ read(pontuacao);
+ write({Disponibilidade do candidato: });
+ read(disponibilidade);
+
+ while (pontuacao>0 && (pontuacao<=pontuacaoMaxima) do
+ if ((pontuação > pontuacaoMinima) && (disponibilidade==1)) then
+ write({Candidato aprovado.})
+ else
+ write({Candidato reprovado.})
+ end
+ write({Pontuacao do candidato: });
+ read(pontuacao);
+ write({Disponibilidade do candidato: });
+ read(disponibilidade);
+ end
+end
 lamp exception near line: 1 
-Exception: Syntax error near token: programa
+Exception: syntax error
+
+Makefile:19: recipe for target 'run' failed
+make: [run] Error 1 (ignored)
 ```
 
-Correção e recompilação
+> Ordem da declaração está errada, `begin` deve vir logo após nome do programa
+```
+❯ make run ARGS=tests/test5.lamp
+./main tests/test5.lamp
+type: 
+match: 
+type 17 not match with 19 ()
+TOKEN: pontuacao
+RAW: , pontuacaoMaxina, disponibilidade is inteiro;
+ pontuacaoMinima is char;
+begin
+ pontuacaoMinima = 50;
+ pontuacaoMaxima = 100;
+ write({Pontuacao do candidato: });
+ read(pontuacao);
+ write({Disponibilidade do candidato: });
+ read(disponibilidade);
+
+ while (pontuacao>0 && (pontuacao<=pontuacaoMaxima) do
+ if ((pontuação > pontuacaoMinima) && (disponibilidade==1)) then
+ write({Candidato aprovado.})
+ else
+ write({Candidato reprovado.})
+ end
+ write({Pontuacao do candidato: });
+ read(pontuacao);
+ write({Disponibilidade do candidato: });
+ read(disponibilidade);
+ end
+end
+lamp exception near line: 3 
+Exception: syntax error
+
+Makefile:19: recipe for target 'run' failed
+make: [run] Error 1 (ignored)
+```
+
+> Identificador `inteiro nao existe`
+```
+./main tests/test5.lamp
+type: 
+match: ;
+type 17 not match with 59 ()
+TOKEN: inteiro
+RAW: ;
+ pontuacaoMinima is char;
+ pontuacaoMinima = 50;
+ pontuacaoMaxima = 100;
+ write({Pontuacao do candidato: });
+ read(pontuacao);
+ write({Disponibilidade do candidato: });
+ read(disponibilidade);
+
+ while (pontuacao>0 && (pontuacao<=pontuacaoMaxima) do
+ if ((pontuação > pontuacaoMinima) && (disponibilidade==1)) then
+ write({Candidato aprovado.})
+ else
+ write({Candidato reprovado.})
+ end
+ write({Pontuacao do candidato: });
+ read(pontuacao);
+ write({Disponibilidade do candidato: });
+ read(disponibilidade);
+ end
+end
+lamp exception near line: 4 
+Exception: syntax error
+
+Makefile:19: recipe for target 'run' failed
+make: [run] Error 1 (ignored)
+```
+
+> Parentese não fechado. 
+```
+./main tests/test5.lamp
+type: 
+match: )
+type 22 not match with 41 ()
+TOKEN: &&
+RAW: && (pontuacao<=pontuacaoMaxima) do
+ if ((pontuação > pontuacaoMinima) && (disponibilidade==1)) then
+ write({Candidato aprovado.})
+ else
+ write({Candidato reprovado.})
+ end
+ write({Pontuacao do candidato: });
+ read(pontuacao);
+ write({Disponibilidade do candidato: });
+ read(disponibilidade);
+ end
+end
+lamp exception near line: 4 
+Exception: syntax error
+
+Makefile:19: recipe for target 'run' failed
+make: [run] Error 1 (ignored)
+```
+>  Pontuação não pode ser usado na gramatica. 
+
+```
+./main tests/test5.lamp
+lamp exception near line: 14 
+Exception: MALFORMATED RAW STRING
+
+Makefile:19: recipe for target 'run' failed
+make: [run] Error 1 (ignored)
+```
+> Falta de `;`
+```
+```
+./main tests/test5.lamp
+type: end
+match: ;
+type 69 not match with 59 ()
+TOKEN: &&
+RAW:
+ end
+ write({Pontuacao do candidato: });
+ read(pontuacao);
+ write({Disponibilidade do candidato: });
+ read(disponibilidade);
+ end
+end
+lamp exception near line: 4 
+Exception: syntax error
+
+Makefile:19: recipe for target 'run' failed
+make: [run] Error 1 (ignored)
+```
+>  Pontuação não pode ser usado na gramatica. 
+
+```
+./main tests/test5.lamp
+lamp exception near line: 14 
+Exception: MALFORMATED RAW STRING
+
+Makefile:19: recipe for target 'run' failed
+make: [run] Error 1 (ignored)
+```
+```
+
+> Falta de simbolo terminal no fim da execução. 
+```
+./main tests/test5.lamp
+type: 
+match: .
+type 0 not match with 46 ()
+TOKEN: end
+RAW: 
+lamp exception near line: 24 
+Exception: syntax error
+
+Makefile:19: recipe for target 'run' failed
+make: [run] Error 1 (ignored)
+```
+#### Correção
+Codigo pós correção se encontra:
 ```
 program teste4
-/* Teste4 do meu compilador
- pontuacao, pontuacaoMaxina, disponibilidade is inteiro;
- pontuacaoMinima is char;
+/* Teste4 do meu compilador */
 begin
- pontuacaoMinima = 50;
- pontuacaoMaxima = 100;
- write({Pontuacao do candidato: });
- read(pontuacao);
- write({Disponibilidade do candidato: });
- read(disponibilidade);
-
- while (pontuacao>0 && (pontuacao<=pontuacaoMaxima) do
- if ((pontuação > pontuacaoMinima) && (disponibilidade==1)) then
- write({Candidato aprovado.})
- else
- write({Candidato reprovado.})
- end
- write({Pontuacao do candidato: });
- read(pontuacao);
- write({Disponibilidade do candidato: });
- read(disponibilidade);
- end
-end
-```
-Erro
-```
-./main tests/test5.lamp
-lamp exception near line: 24 
-Exception: unterminated comment
-```
-Correção e recompilação
-
-```
-program teste4 
-/* Teste4 do meu compilador */
- pontuacao, pontuacaoMaxina, disponibilidade is inteiro;
- pontuacaoMinima is char;
-begin
- pontuacaoMinima = 50;
- pontuacaoMaxima = 100;
- write({Pontuacao do candidato: });
- read(pontuacao);
- write({Disponibilidade do candidato: });
- read(disponibilidade);
-
- while (pontuacao>0 && (pontuacao<=pontuacaoMaxima) do
- if ((pontuação > pontuacaoMinima) && (disponibilidade==1)) then
- write({Candidato aprovado.})
- else
- write({Candidato reprovado.})
- end
- write({Pontuacao do candidato: });
- read(pontuacao);
- write({Disponibilidade do candidato: });
- read(disponibilidade);
- end
-end
-```
-
-```
-./main tests/test5.lamp
-lamp exception near line: 3 
-Exception: Syntax error near token: pontuacao
-```
-Correção e recompilação
-```
-program teste4 begin
-/* Teste4 do meu compilador */
- pontuacao, pontuacaoMaxina, disponibilidade is inteiro;
- pontuacaoMinima is char;
- pontuacaoMinima = 50;
- pontuacaoMaxima = 100;
- write({Pontuacao do candidato: });
- read(pontuacao);
- write({Disponibilidade do candidato: });
- read(disponibilidade);
-
- while (pontuacao>0 && (pontuacao<=pontuacaoMaxima) do
- if ((pontuação > pontuacaoMinima) && (disponibilidade==1)) then
- write({Candidato aprovado.})
- else
- write({Candidato reprovado.})
- end
- write({Pontuacao do candidato: });
- read(pontuacao);
- write({Disponibilidade do candidato: });
- read(disponibilidade);
- end
-end
-```
-./main tests/test5.lamp
-lamp exception near line: 3 
-Exception: Syntax error near token: pontuacao
-```
-
-Correção e recompilação
-```
-program teste4 begin
-/* Teste4 do meu compilador */
  pontuacao, pontuacaoMaxina, disponibilidade is int;
  pontuacaoMinima is char;
  pontuacaoMinima = 50;
@@ -821,164 +896,8 @@ program teste4 begin
  read(disponibilidade);
 
  while (pontuacao>0) && (pontuacao<=pontuacaoMaxima) do
- if ((pontuação > pontuacaoMinima) && (disponibilidade==1)) then
- write({Candidato aprovado.})
- else
- write({Candidato reprovado.})
- end
- write({Pontuacao do candidato: });
- read(pontuacao);
- write({Disponibilidade do candidato: });
- read(disponibilidade);
- end
-end
-```
-./main tests/test5.lamp
-lamp exception near line: 13 
-Exception: Syntax error near token: &&
-```
-Correção e recompilação
-```
-program teste4 begin
-/* Teste4 do meu compilador */
- pontuacao, pontuacaoMaxina, disponibilidade is int;
- pontuacaoMinima is char;
- pontuacaoMinima = 50;
- pontuacaoMaxima = 100;
- write({Pontuacao do candidato: });
- read(pontuacao);
- write({Disponibilidade do candidato: });
- read(disponibilidade);
-
- while ((pontuacao>0) && (pontuacao<=pontuacaoMaxima)) do
- if ((pontuação > pontuacaoMinima) && (disponibilidade==1)) then
- write({Candidato aprovado.})
- else
- write({Candidato reprovado.})
- end
- write({Pontuacao do candidato: });
- read(pontuacao);
- write({Disponibilidade do candidato: });
- read(disponibilidade);
- end
-end
-```
-./main tests/test5.lamp
-lamp exception near line: 13 
-Exception: Syntax error near token: pontuacao
-```
-
-Correção e recompilação
-```
-program teste4 begin
-/* Teste4 do meu compilador */
- pontuacao, pontuacaoMaxina, disponibilidade is int;
- pontuacaoMinima is char;
- pontuacaoMinima = 50;
- pontuacaoMaxima = 100;
- write({Pontuacao do candidato: });
- read(pontuacao);
- write({Disponibilidade do candidato: });
- read(disponibilidade);
-
- while ((pontuacao>0) && (pontuacao<=pontuacaoMaxima)) do
- if ((pontuação > pontuacaoMinima) && (disponibilidade==1)) then
- write({Candidato aprovado.})
- else
- write({Candidato reprovado.})
- end
- write({Pontuacao do candidato: });
- read(pontuacao);
- write({Disponibilidade do candidato: });
- read(disponibilidade);
- end
-end
-```
-./main tests/test5.lamp
-lamp exception near line: 16 
-Exception: Syntax error near token: else
-```
-
-Correção e recompilação
-```
-program teste4 begin
-/* Teste4 do meu compilador */
- pontuacao, pontuacaoMaxina, disponibilidade is int;
- pontuacaoMinima is char;
- pontuacaoMinima = 50;
- pontuacaoMaxima = 100;
- write({Pontuacao do candidato: });
- read(pontuacao);
- write({Disponibilidade do candidato: });
- read(disponibilidade);
-
- while ((pontuacao>0) && (pontuacao<=pontuacaoMaxima)) do
- if ((pontuação > pontuacaoMinima) && (disponibilidade==1)) then
- write({Candidato aprovado.})
- else
- write({Candidato reprovado.})
- end
- write({Pontuacao do candidato: });
- read(pontuacao);
- write({Disponibilidade do candidato: });
- read(disponibilidade);
- end
-end
-
-```
-./main tests/test5.lamp
-lamp exception near line: 16 
-Exception: Syntax error near token: else
-```
-
-Correção e recompilação
-```
-program teste4 begin
-/* Teste4 do meu compilador */
- pontuacao, pontuacaoMaxina, disponibilidade is int;
- pontuacaoMinima is char;
- pontuacaoMinima = 50;
- pontuacaoMaxima = 100;
- write({Pontuacao do candidato: });
- read(pontuacao);
- write({Disponibilidade do candidato: });
- read(disponibilidade);
-
- while ((pontuacao>0) && (pontuacao<=pontuacaoMaxima)) do
  if ((pontuacao > pontuacaoMinima) && (disponibilidade==1)) then
- write({Candidato aprovado.})
- else
- write({Candidato reprovado.})
- end
- write({Pontuacao do candidato: });
- read(pontuacao);
- write({Disponibilidade do candidato: });
- read(disponibilidade);
- end
-end
-
-```
-./main tests/test5.lamp
-lamp exception near line: 24
-Exception: Syntax error near token: en
-```
-
-Correção e recompilação
-```
-program teste4 begin
-/* Teste4 do meu compilador */
- pontuacao, pontuacaoMaxina, disponibilidade is int;
- pontuacaoMinima is char;
- pontuacaoMinima = 50;
- pontuacaoMaxima = 100;
- write({Pontuacao do candidato: });
- read(pontuacao);
- write({Disponibilidade do candidato: });
- read(disponibilidade);
-
- while ((pontuacao>0) && (pontuacao<=pontuacaoMaxima)) do
- if ((pontuacao > pontuacaoMinima) && (disponibilidade==1)) then
- write({Candidato aprovado.})
+ write({Candidato aprovado.});
  else
  write({Candidato reprovado.})
  end
@@ -988,15 +907,9 @@ program teste4 begin
  read(disponibilidade);
  end
 end.
-
 ```
-./main tests/test5.lamp
-lamp exception near line: 24
-Exception: Syntax error near token: en
-```
-
-#### Test 6
-
+### Teste 6
+O arquivo de teste contém o seguinte conteudo no inicio da compilação:
 ```
 /* Teste do meu compilador */
 program teste5
@@ -1025,21 +938,20 @@ begin
  write (maior);
  write ({Outro? (S/N)});
  read(outro);
- until (outro == 'N' || outro == 'n)
+ until (outro == 'N' || outro == 'n')
 end
 ```
+### Correção
+> Econtra com a o `begin` fora de posição
 ```
-lamp exception near line: 3 
-Exception: Syntax error near token: a
-```
-
-Correção e recompilação
-```
-/* Teste do meu compilador */
-program teste5
-begin
- a, b, c, maior is int;
+./main tests/test6.lamp
+type: 
+match: 
+type 17 not match with 19 ()
+TOKEN: a
+RAW: , b, c, maior is int;
  outro is char;
+begin
  repeat
  write({A});
  read(a);
@@ -1062,29 +974,23 @@ begin
  write (maior);
  write ({Outro? (S/N)});
  read(outro);
- until (outro == 'N' || outro == 'n)
+ until (outro == 'N' || outro == 'n')
 end
+lamp exception near line: 3 
+Exception: syntax error
+
+Makefile:19: recipe for target 'run' failed
+make: [run] Error 1 (igno
 ```
+
+> Uso de `end` ao invez de `then`
 ```
-lamp exception near line: 13 
-Exception: Syntax error near token: end
-```
-Correção e recompilação
-```
-/* Teste do meu compilador */
-program teste5
-begin
- a, b, c, maior is int;
- outro is char;
- repeat
- write({A});
- read(a);
- write({B});
- read(b);
- write({C});
- read(c);
- if ( (a>b) && (a>c) ) then
- maior = a
+./main tests/test6.lamp
+type: 
+match: .
+type 17 not match with 46 ()
+TOKEN: maior
+RAW:  = a;
 
  else
  if (b>c) then
@@ -1098,231 +1004,103 @@ begin
  write (maior);
  write ({Outro? (S/N)});
  read(outro);
- until (outro == 'N' || outro == 'n)
+ until (outro == 'N' || outro == 'n')
 end
-```
-```
-lamp exception near line: 13 
-Exception: Syntax error near token: end
-```
-Correção e recompilação
-```
-/* Teste do meu compilador */
-program teste5
-begin
- a, b, c, maior is int;
- outro is char;
- repeat
- write({A});
- read(a);
- write({B});
- read(b);
- write({C});
- read(c);
- if ( (a>b) && (a>c) ) then
- maior = a;
+lamp exception near line: 14 
+Exception: syntax error
 
- else
- if (b>c) then
- maior = b;
+Makefile:19: recipe for target 'run' failed
+make: [run] Error 1 (ignored)
+```
 
- else
- maior = c
- end
- end;
+> Falta de `;`
+```
+./main tests/test6.lamp
+type: ;
+match: .
+type 59 not match with 46 (;)
+TOKEN: end
+RAW: 
  write({Maior valor:}});
  write (maior);
  write ({Outro? (S/N)});
- read(outro);
- until (outro == 'N' || outro == 'n)
-end
-```
-```
-lamp exception near line: 16
-Exception: Syntax error near token: else
-```
-Correção e recompilação
-```
-/* Teste do meu compilador */
-program teste5
-begin
- a, b, c, maior is int;
- outro is char;
- repeat
- write({A});
- read(a);
- write({B});
- read(b);
- write({C});
- read(c);
- if ( (a>b) && (a>c) ) then
- maior = a;
-
- else
- if (b>c) then
- maior = b;
-
- else
- maior = c;
- end
- end;
- write({Maior valor:}});
- write (maior);
- write ({Outro? (S/N)});
- read(outro);
- until (outro == 'N' || outro == 'n)
-end
-```
-```
-lamp exception near line: 23
-Exception: Syntax error near token:end
-```
-
-Correção e recompilação
-```
-/* Teste do meu compilador */
-program teste5
-begin
- a, b, c, maior is int;
- outro is char;
- repeat
- write({A});
- read(a);
- write({B});
- read(b);
- write({C});
- read(c);
- if ( (a>b) && (a>c) ) then
- maior = a;
-
- else
- if (b>c) then
- maior = b;
-
- else
- maior = c;
- end
- end;
- write({Maior valor:}});
- write (maior);
- write ({Outro? (S/N)});
- read(outro);
- until (outro == 'N' || outro == 'n)
-end
-```
-```
-lamp exception near line: 24
-Exception: Syntax error near token:read;
-```
-Correção e recompilação
-```
-/* Teste do meu compilador */
-program teste5
-begin
- a, b, c, maior is int;
- outro is char;
- repeat
- write({A});
- read(a);
- write({B});
- read(b);
- write({C});
- read(c);
- if ( (a>b) && (a>c) ) then
- maior = a;
-
- else
- if (b>c) then
- maior = b;
-
- else
- maior = c;
- end
- end;
- write({Maior valor:}});
- write (maior);
- write ({Outro? (S/N));
- read(outro);
- until (outro == 'N' || outro == 'n)
-end
-```
-```
-lamp exception near line: 25 
-Exception: CHARACTER NOT FORMATTED
-```
-Correção e recompilação
-```
-/* Teste do meu compilador */
-program teste5
-begin
- a, b, c, maior is int;
- outro is char;
- repeat
- write({A});
- read(a);
- write({B});
- read(b);
- write({C});
- read(c);
- if ( (a>b) && (a>c) ) then
- maior = a;
-
- else
- if (b>c) then
- maior = b;
-
- else
- maior = c;
- end
- end;
- write({Maior valor:}});
- write (maior);
- write ({Outro? (S/N));
  read(outro);
  until (outro == 'N' || outro == 'n')
 end
-```
-```
-lamp exception near line: 25 
-Exception: CHARACTER NOT FORMATTED
-```
-Correção e recompilação
-```
-/* Teste do meu compilador */
-program teste5
-begin
- a, b, c, maior is int;
- outro is char;
- repeat
- write({A});
- read(a);
- write({B});
- read(b);
- write({C});
- read(c);
- if ( (a>b) && (a>c) ) then
- maior = a;
+lamp exception near line: 23 
+Exception: syntax error
 
- else
- if (b>c) then
- maior = b;
-
- else
- maior = c;
- end
- end;
+Makefile:19: recipe for target 'run' failed
+make: [run] Error 1 (ignored)
+```
+> Falta de `;`
+```
+./main tests/test6.lamp
+type: ;
+match: .
+type 59 not match with 46 (;)
+TOKEN: end
+RAW: 
  write({Maior valor:}});
  write (maior);
- write ({Outro? (S/N));
+ write ({Outro? (S/N)});
  read(outro);
  until (outro == 'N' || outro == 'n')
 end
+lamp exception near line: 23 
+Exception: syntax error
+
+Makefile:19: recipe for target 'run' failed
+make: [run] Error 1 (ignored)
+
 ```
+> Soma de `;`
+
+```./main tests/test6.lamp
+type: ;
+match: .
+type 59 not match with 46 (;)
+TOKEN: end
+RAW: 
+ write({Maior valor:}});
+ write (maior);
+ write ({Outro? (S/N)});
+ read(outro);
+ until (outro == 'N' || outro == 'n')
+end
+lamp exception near line: 23 
+Exception: syntax error
+
+Makefile:19: recipe for target 'run' failed
+make: [run] Error 1 (ignored)
+
 ```
-lamp exception near line: 26 
-Exception: Syntax error near token: end
+> String literal mal formatada
 ```
-Correção e recompilação
+./main tests/test6.lamp
+lamp exception near line: 23 
+Exception: MALFORMATED RAW STRING
+
+Makefile:19: recipe for target 'run' failed
+make: [run] Error 1 (ignored)
+```
+
+> Falta de simbolo terminal `.`
+```
+./main tests/test6.lamp
+type: 
+match: .
+type 0 not match with 46 ()
+TOKEN: end
+RAW: 
+lamp exception near line: 28 
+Exception: syntax error
+
+Makefile:19: recipe for target 'run' failed
+make: [run] Error 1 (ignored)
+```
+#### Conclusão
+O codigo corrigido ficará
 ```
 /* Teste do meu compilador */
 program teste5
@@ -1338,24 +1116,21 @@ begin
  read(c);
  if ( (a>b) && (a>c) ) then
  maior = a;
-
- else
+ end
  if (b>c) then
  maior = b;
-
  else
  maior = c;
  end
- end;
- write({Maior valor:}});
+ write({Maior valor:});
  write (maior);
- write ({Outro? (S/N));
+ write ({Outro? (S/N)});
  read(outro);
  until (outro == 'N' || outro == 'n')
 end.
 ```
-
-#### Test 7
+### Teste 7
+O codigo no inicio da execução era
 ```
 /* Test */
 program teste1
@@ -1365,27 +1140,41 @@ begin
     write(a+b);
 end
 ```
-
+#### Correção
+> Encontra-se na ordem incorreta o begin e o write
 ```
+./main tests/test7.lamp
+type: 
+match: 
+type 17 not match with 19 ()
+TOKEN: a
+RAW:  is int;
+    b is float;
+begin
+    write(a+b);
+end
 lamp exception near line: 3 
-Exception: Syntax error near token: a
-```
-Corrigindo e recompilando
-```
-/* Test */
-program teste1
-begin
-    a is int;
-    b is float;
-    write(a+b);
-end
-```
+Exception: syntax error
 
+Makefile:19: recipe for target 'run' failed
+make: [run] Error 1 (ignored)
 ```
+> Falta do simbolo terminal `.`
+```
+./main tests/test7.lamp
+type: 
+match: .
+type 0 not match with 46 ()
+TOKEN: end
+RAW: 
 lamp exception near line: 7 
-Exception: Syntax error near token: end
+Exception: syntax error
+
+Makefile:19: recipe for target 'run' failed
+make: [run] Error 1 (ignored)
 ```
-Corrigindo e recompilando
+#### Correção
+O Codigo final ficaria: 
 ```
 /* Test */
 program teste1
@@ -1395,8 +1184,7 @@ begin
     write(a+b);
 end.
 ```
-
-## Considerações
+### Considerações
 O codigo está em um arquivo apenas, dado que queriamos experimentar uma implementação em C pois precisariamos da mesma para algumas materias no futuro do nosso curso e não tivemos muito contato com a mesma. Com isso o codigo pode conter duplicações e problemas de padrões de C dado o contexto que cada um de nós (Lara e João) estamos inseridos. 
 
 
