@@ -1,8 +1,8 @@
-programa teste4
+program teste4
 /* Teste4 do meu compilador */
- pontuacao, pontuacaoMaxina, disponibilidade is inteiro;
- pontuacaoMinima is char;
 begin
+ pontuacao, pontuacaoMaxina, disponibilidade is int;
+ pontuacaoMinima is char;
  pontuacao, pontuacaoMaxina, disponibilidade is int;
  pontuacaoMinima is char;
  pontuacaoMinima = 50;

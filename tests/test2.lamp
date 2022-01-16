@@ -3,7 +3,6 @@ begin
  a, b is int;
  result is int;
  a,x is float;
-begin
  a = 12a;
  x = 12.0;
  read (a);
