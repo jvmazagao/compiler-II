@@ -1,7 +1,7 @@
 /* Test */
 program teste1
+begin
     a is int;
     b is float;
-begin
     write(a+b);
-end
+end.

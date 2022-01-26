@@ -28,407 +28,639 @@ A função `words` consiste nas palavras reservadas, que usam a tabela de simbol
     O programa faz uso de Makefile, logo para uma pre compilação usa-se 
 `make all` para a compilação e para a execução dos testes usa-se `make test`.
 Como nessa primeira entrega o make test vai printar toda a tabela de simbolos 
-com todos os tokens pre definidos e os tokens escaneados. 
+com todos os token pre definidos e os tokens escaneados. 
+### Execução de um arquivo
+    Caso seja nescessário a executção de apenas um arquivo melo compilador,
+deverá executar o comand `make ARGS=file`;
+    - O arquivo retornará a string Compilation Succesfull. Exiting. se o arquivo compilar corretamente sem nenhum erro de sintaxe. 
+    - Caso retorne algum erro retornará qual token e e onde aconteceu o erro. 
 
-### Primeira Execução
-A primeira execução dos casos de teste mostra que os testes 1, 3 e 7 fizeram uma analise lexica correta, agor devemos corrigir os outros casos de teste para que passem pela analise léxica. 
+## Mudanças de codigo
+Para uma melhor legibilidade ocorreram alterações na forma como o compilador 
+interpreta os erros, e com isso melhorou a leitura dos mesmos. 
+
+Encontramos um erro de interpretação na forma como o comentário era lido e não retornava erro quando o mesmo nao se fechava. Com isso resultou numa modificação de codigo. 
+
+## Mudanças na gramatica
+Não fora necessários nenhuma mudanças na gramática, porém os casos de testes foram modificados.
+
+## Teste de compilação
+A execução de todos os testes serão executados e verificados se existe algum erro. 
+> Todos os testes serão executados com base nos arquivos da entrega 1.
+
+### Teste 1
+O arquivo de teste inicial contém o seguinte conteudo no inicio da compilação:
+```
+/* Test */
+program teste1
+    a is int;
+    b is float;
+begin
+    write(a+b);
+end
+```
 
 ```
-lamp compiler test suite
-========================
-test1.lamp... 
-Token: program - Type: 1
-Token: teste1 - Type: 17
-Token: a - Type: 17
-Token: is - Type: 18
-Token: int - Type: 14
-Token: int - Type: 59
-Token: b - Type: 17
-Token: is - Type: 18
-Token: float - Type: 13
-Token: float - Type: 59
-Token: begin - Type: 19
-Token: write - Type: 11
-Token: write - Type: 40
-Token: a - Type: 17
-Token: a - Type: 43
-Token: b - Type: 17
-Token: b - Type: 41
-Token: b - Type: 59
-Token: end - Type: 69
+./main tests/test1.lamp
+type: 
+match: 
+type 17 not match with 19 ()
+TOKEN: a
+RAW:  is int;
+    b is float;
+begin
+    write(a+b);
+end
+lamp exception near line: 3 
+Exception: syntax error
 
+Makefile:19: recipe for target 'run' failed
+make: [run] Error 1 (ignored)
+```
+> O teste 1, que fora criado por nosso grupo, contém um erro na declaração da linguagem. Onde o token `begin` deve estar logo em seguinda no nome do arquivo de teste.
 
----- Hash Table ---
-@0: float => 13 | char => 15 | if => 2 | while => 8 | write => 11 | 
-@1: program => 1 | begin => 19 | is => 18 | int => 14 | until => 7 | do => 9 | read => 10 | teste1 => 17 | a => 17 | 
-@2: end => 69 | then => 3 | else => 5 | repeat => 6 | b => 17 | 
--------------------
+#### Correção
 
-test2.lamp... 
-Token: program - Type: 1
-Token: teste1 - Type: 17
-Token: a - Type: 17
-Token: a - Type: 44
-Token: b - Type: 17
-Token: is - Type: 18
-Token: int - Type: 14
-Token: int - Type: 59
-Token: result - Type: 17
-Token: is - Type: 18
-Token: int - Type: 14
-Token: int - Type: 59
-Token: a - Type: 17
-Token: a - Type: 44
-Token: x - Type: 17
-Token: is - Type: 18
-Token: float - Type: 13
-Token: float - Type: 59
-Token: begin - Type: 19
-Token: a - Type: 17
-Token: a - Type: 61
-Token: 12 - Type: 73
-Token: a - Type: 17
-Token: a - Type: 59
-Token: x - Type: 17
-Token: x - Type: 61
+```
+./main tests/test1.lamp
+type: 
+match: .
+type 0 not match with 46 ()
+TOKEN: end
+RAW: 
 lamp exception near line: 7 
-Exception: FLOAT CONST NOT FORMATTED
+Exception: syntax error
 
-test3.lamp... 
-Token: program - Type: 1
-Token: teste2 - Type: 17
-Token: a - Type: 17
-Token: a - Type: 44
-Token: b - Type: 17
-Token: b - Type: 44
-Token: c - Type: 17
-DEFAULTS 142
+Makefile:19: recipe for target 'run' failed
+make: [run] Error 1 (ignored)
+```
+> Agora o erro encontrado, é por causa da falta do sinal terminal `.` que se encontra no fim do arquivo. 
+
+#### Correção
+```
+./main tests/test1.lamp
+Compilation Succesfull. Exiting
+```
+O arquivo corrigido fica:
+```
+/* Test */
+program teste1
+begin
+    a is int;
+    b is float;
+    write(a+b);
+end.
+```
+### Teste 2
+O arquivo de teste contém o seguinte conteudo no inicio da compilação:
+```
+program teste1
+ a, b is int;
+ result is int;
+ a,x is float;
+begin
+ a = 12a;
+ x = 12.0;
+ read (a);
+ read (b);
+ read (c)
+ result = (a*b + 1) / (c+2);
+ write {Resultado: };
+ write (result);
+end.
+```
+> O teste 2 contém um erro na declaração inicial. Onde o token `begin` deve estar logo em seguinda no nome do arquivo de teste.
+
+```
+./main tests/test2.lamp
+type: 
+match: 
+type 17 not match with 19 ()
+TOKEN: a
+RAW: , b is int;
+ result is int;
+ a,x is float;
+begin
+ a = 12a;
+ x = 12.0;
+ read (a);
+ read (b);
+ read (c)
+ result = (a*b + 1) / (c+2);
+ write {Resultado: };
+ write (result);
+end.
 lamp exception near line: 2 
-Exception: MALFORMATED RAW STRING
+Exception: syntax error
 
-test4.lamp... 
-Token: program - Type: 1
-Token: a - Type: 17
-Token: a - Type: 44
-Token: aux - Type: 17
-Token: is - Type: 18
-Token: int - Type: 14
-Token: int - Type: 59
-Token: b - Type: 17
-Token: is - Type: 18
-Token: float - Type: 13
-Token: begin - Type: 19
-Token: b - Type: 17
-Token: b - Type: 61
-Token: 0 - Type: 73
-Token: 0 - Type: 59
-Token: in - Type: 17
-Token: in - Type: 40
-Token: a - Type: 17
-Token: a - Type: 41
-Token: a - Type: 59
-Token: in - Type: 17
-Token: in - Type: 40
-Token: b - Type: 17
-Token: b - Type: 41
-Token: b - Type: 59
-Token: if - Type: 2
-Token: if - Type: 40
-Token: a - Type: 17
-Token: a - Type: 62
-Token: a - Type: 41
-Token: then - Type: 3
-Token: aux - Type: 17
-Token: aux - Type: 61
-Token: b - Type: 17
-Token: b - Type: 59
-Token: b - Type: 17
-Token: b - Type: 61
-Token: a - Type: 17
-Token: a - Type: 59
-Token: a - Type: 17
-Token: a - Type: 61
-Token: aux - Type: 17
-Token: end - Type: 69
-Token: end - Type: 59
-Token: write - Type: 11
-Token: write - Type: 40
-Token: a - Type: 17
-Token: a - Type: 59
-Token: write - Type: 11
-Token: write - Type: 40
-Token: b - Type: 17
-Token: b - Type: 41
-
-
----- Hash Table ---
-@0: float => 13 | char => 15 | if => 2 | while => 8 | write => 11 | 
-@1: program => 1 | begin => 19 | is => 18 | int => 14 | until => 7 | do => 9 | read => 10 | a => 17 | aux => 17 | 
-@2: end => 69 | then => 3 | else => 5 | repeat => 6 | b => 17 | in => 17 | 
--------------------
-
-test5.lamp... 
-Token: programa - Type: 17
-Token: teste4 - Type: 17
-lamp exception near line: 24 
-Exception: unterminated comment
-
-test6.lamp... 
-Token: program - Type: 1
-Token: teste5 - Type: 17
-Token: a - Type: 17
-Token: a - Type: 44
-Token: b - Type: 17
-Token: b - Type: 44
-Token: c - Type: 17
-Token: c - Type: 44
-Token: maior - Type: 17
-Token: is - Type: 18
-Token: int - Type: 14
-Token: int - Type: 59
-Token: outro - Type: 17
-Token: is - Type: 18
-Token: char - Type: 15
-Token: char - Type: 59
-Token: begin - Type: 19
-Token: repeat - Type: 6
-Token: write - Type: 11
-Token: write - Type: 40
-Token: A - Type: 16
-Token: A - Type: 41
-Token: A - Type: 59
-Token: read - Type: 10
-Token: read - Type: 40
-Token: a - Type: 17
-Token: a - Type: 41
-Token: a - Type: 59
-Token: write - Type: 11
-Token: write - Type: 40
-Token: B - Type: 16
-Token: B - Type: 41
-Token: B - Type: 59
-Token: read - Type: 10
-Token: read - Type: 40
-Token: b - Type: 17
-Token: b - Type: 41
-Token: b - Type: 59
-Token: write - Type: 11
-Token: write - Type: 40
-Token: C - Type: 16
-Token: C - Type: 41
-Token: C - Type: 59
-Token: read - Type: 10
-Token: read - Type: 40
-Token: c - Type: 17
-Token: c - Type: 41
-Token: c - Type: 59
-Token: if - Type: 2
-Token: if - Type: 40
-Token: if - Type: 40
-Token: a - Type: 17
-Token: a - Type: 62
-Token: a - Type: 41
-Token: a - Type: 97
-Token: a - Type: 40
-Token: a - Type: 17
-Token: a - Type: 62
-Token: a - Type: 41
-Token: a - Type: 41
-Token: end - Type: 69
-Token: maior - Type: 17
-Token: maior - Type: 61
-Token: a - Type: 17
-Token: else - Type: 5
-Token: if - Type: 2
-Token: if - Type: 40
-Token: b - Type: 17
-Token: b - Type: 62
-Token: b - Type: 41
-Token: then - Type: 3
-Token: maior - Type: 17
-Token: maior - Type: 61
-Token: b - Type: 17
-Token: b - Type: 59
-Token: else - Type: 5
-Token: maior - Type: 17
-Token: maior - Type: 61
-Token: c - Type: 17
-Token: end - Type: 69
-Token: end - Type: 69
-Token: end - Type: 59
-Token: write - Type: 11
-Token: write - Type: 40
-Token: Maior valor: - Type: 16
-DEFAULTS 99
-lamp exception near line: 24 
-Exception: MALFORMATED RAW STRING
-
-test7.lamp... 
-Token: program - Type: 1
-Token: teste1 - Type: 17
-Token: a - Type: 17
-Token: is - Type: 18
-Token: int - Type: 14
-Token: int - Type: 59
-Token: b - Type: 17
-Token: is - Type: 18
-Token: float - Type: 13
-Token: float - Type: 59
-Token: begin - Type: 19
-Token: write - Type: 11
-Token: write - Type: 40
-Token: a - Type: 17
-Token: a - Type: 43
-Token: b - Type: 17
-Token: b - Type: 41
-Token: b - Type: 59
-Token: end - Type: 69
-
-
----- Hash Table ---
-@0: float => 13 | char => 15 | if => 2 | while => 8 | write => 11 | 
-@1: program => 1 | begin => 19 | is => 18 | int => 14 | until => 7 | do => 9 | read => 10 | teste1 => 17 | a => 17 | 
-@2: end => 69 | then => 3 | else => 5 | repeat => 6 | b => 17 | 
--------------------
+Makefile:19: recipe for target 'run' failed
+make: [run] Error 1 (ignored)
 ```
-
-### Test 2
+#### Correção
+> Encontra-se um erro na atribuição `a = 12a`. Sendo que deve conter um valor de operação. 
 
 ```
 ./main tests/test2.lamp
-Token: program - Type: 1
-Token: teste1 - Type: 17
-Token: a - Type: 17
-Token: a - Type: 44
-Token: b - Type: 17
-Token: is - Type: 18
-Token: int - Type: 14
-Token: int - Type: 59
-Token: result - Type: 17
-Token: is - Type: 18
-Token: int - Type: 14
-Token: int - Type: 59
-Token: a - Type: 17
-Token: a - Type: 44
-Token: x - Type: 17
-Token: is - Type: 18
-Token: float - Type: 13
-Token: float - Type: 59
-Token: begin - Type: 19
-Token: a - Type: 17
-Token: a - Type: 61
-Token: 12 - Type: 73
-Token: a - Type: 17
-Token: a - Type: 59
-Token: x - Type: 17
-Token: x - Type: 61
+type: 
+match: ;
+type 17 not match with 59 ()
+TOKEN: result
+RAW:  = (a*b + 1) / (c+2);
+ write {Resultado: };
+ write (result);
+end.
+lamp exception near line: 11 
+Exception: syntax error
+
+Makefile:19: recipe for target 'run' failed
+make: [run] Error 1 (ignored)
+```
+> Encontra-se com falta de `;` no fim da linha 10 - precisa de uma melhoria de leitura de tokens para mostrar a linha correta.
+```
+./main tests/test2.lamp
+type: 
+match: (
+type 16 not match with 40 ()
+TOKEN: Resultado: 
+RAW: ;
+ write (result);
+end.
+lamp exception near line: 12 
+Exception: syntax error
+
+Makefile:19: recipe for target 'run' failed
+make: [run] Error 1 (ignored)
+```
+> Encontra-se com falta do simbolo inicial de parentese para começar a definição do write. 
+```
+./main tests/test2.lamp
+type: ;
+match: )
+type 59 not match with 41 (;)
+TOKEN: Resultado: 
+RAW: 
+ write (result);
+end.
+lamp exception near line: 12 
+Exception: syntax error
+
+Makefile:19: recipe for target 'run' failed
+make: [run] Error 1 (ignored)
+```
+> Encontra-se com falta do simbolo final de parentese para começar a definição do write. 
+#### Conclusão 
+O codigo para ser compilado, ficará na seguinte forma e compilará corretamente.
+```
+program teste1
+begin
+ a, b is int;
+ result is int;
+ a,x is float;
+ a = 12*a;
+ x = 12.0;
+ read (a);
+ read (b);
+ read (c);
+ result = (a*b + 1) / (c+2);
+ write ({Resultado: });
+ write (result);
+end.
+```
+Saída do compilador.
+```
+./main tests/test2.lamp
+Compilation Succesfull. Exiting
+```
+### Teste 3
+O arquivo de teste contém o seguinte conteudo no inicio da compilação:
+```
+program teste2
+ a, b, c:int;
+ d, _var: float;
+ teste2 = 1;
+ Read (a);
+ b = a * a;
+ c = b + a/2 * (35/b);
+ write c;
+ val := 34.2
+ c = val + 2.2 + a;
+ write (val)
+end.
+```
+### Correção
+```
+./main tests/test3.lamp
+type: 
+match: 
+type 17 not match with 19 ()
+TOKEN: a
+RAW: , b, c:int;
+ d, _var: float;
+ teste2 = 1;
+ Read (a);
+ b = a * a;
+ c = b + a/2 * (35/b);
+ write c;
+ val := 34.2
+ c = val + 2.2 + a;
+ write (val)
+end.
+lamp exception near line: 2 
+Exception: syntax error
+
+Makefile:19: recipe for target 'run' failed
+make: [run] Error 1 (ignored)
+```
+> Ocorre o priemeiro erro de compilação, que é a falta de `begin` na compilação.
+```
+./main tests/test3.lamp
+lamp exception near line: 3 
+Exception: MALFORMATED RAW STRING
+
+Makefile:19: recipe for target 'run' failed
+make: [run] Error 1 (ignored)
+```
+> Erro generico, que no caso mostra que a declaração da variável está errado. 
+```
+./main tests/test3.lamp
+lamp exception near line: 4 
+Exception: MALFORMATED RAW STRING
+
+Makefile:19: recipe for target 'run' failed
+make: [run] Error 1 (ignored)
+```
+> Erro generico, que no caso mostra que a declaração da variável está errado. 
+```
+./main tests/test3.lamp
+lamp exception near line: 4 
+Exception: MALFORMATED RAW STRING
+
+Makefile:19: recipe for target 'run' failed
+make: [run] Error 1 (ignored)
+```
+> Erro generico, que no caso mostra que a declaração da variável está errado. 
+```
+./main tests/test3.lamp
+type: (
+match: 
+type 40 not match with 17 (()
+TOKEN: Read
+RAW: a);
+ b = a * a;
+ c = b + a/2 * (35/b);
+ write c;
+ val := 34.2
+ c = val + 2.2 + a;
+ write (val)
+end.
+lamp exception near line: 6 
+Exception: syntax error
+
+Makefile:19: recipe for target 'run' failed
+make: [run] Error 1 (ignored)
+```
+> Acontece um erro no token `read` que se encontra com R maiusculo. 
+```
+./main tests/test3.lamp
+type: 
+match: (
+type 17 not match with 40 ()
+TOKEN: c
+RAW: ;
+ val := 34.2
+ c = val + 2.2 + a;
+ write (val)
+end.
+lamp exception near line: 9 
+Exception: syntax error
+
+Makefile:19: recipe for target 'run' failed
+make: [run] Error 1 (ignored)
+```
+> O identificador write se encontra mal formatado, faltando primeiro parentese.
+```
+./main tests/test3.lamp
+type: ;
+match: )
+type 59 not match with 41 (;)
+TOKEN: c
+RAW: 
+ val := 34.2
+ c = val + 2.2 + a;
+ write (val)
+end.
+lamp exception near line: 9 
+Exception: syntax error
+
+Makefile:19: recipe for target 'run' failed
+make: [run] Error 1 (ignored)
+``` 
+> O identificador write se encontra mal formatado, Faltando o parentese de fechamento.
+```
+./main tests/test3.lamp
+lamp exception near line: 10 
+Exception: MALFORMATED RAW STRING
+
+Makefile:19: recipe for target 'run' failed
+make: [run] Error 1 (ignored)
+```
+> Erro na atribuição da variável.
+```
+./main tests/test3.lamp
+type: 
+match: ;
+type 17 not match with 59 ()
+TOKEN: c
+RAW:  = val + 2.2 + a;
+ write (val)
+end.
+lamp exception near line: 11 
+Exception: syntax error
+
+Makefile:19: recipe for target 'run' failed
+make: [run] Error 1 (ignored)
+```
+> Falta de simbolo terminal `;`
+```
+./main tests/test3.lamp
+type: 
+match: ;
+type 17 not match with 59 ()
+TOKEN: c
+RAW:  = val + 2.2 + a;
+ write (val)
+end.
+lamp exception near line: 12
+Exception: syntax error
+
+Makefile:19: recipe for target 'run' failed
+make: [run] Error 1 (ignored)
+```
+> Falta de `;`
+#### Conclusão
+O codigo a ser compilado será:
+```
+program teste2
+begin
+ a, b, c is int;
+ d, var is float;
+ teste2 = 1;
+ read (a);
+ b = a * a;
+ c = b + a/2 * (35/b);
+ write (c);
+ val = 34.2;
+ c = val + 2.2 + a;
+ write (val);
+end.
+```
+Após todas as correções e retornará 
+```
+test3.lamp... 
+Compilation Succesfull. Exiting
+```
+
+### Teste 4
+O arquivo de teste contém o seguinte conteudo no inicio da compilação:
+```  ​
+program
+​a, aux is int;
+​b is float
+​begin
+​b = 0;
+​in (a);
+​in(b);
+​if (a>b) then
+​aux = b;
+​b = a;
+​a = aux
+​end;
+​write(a;
+​write(b)
+
+```
+
+### Correções
+> Primeiro erro encontrado é a falta de nome no progama. 
+```
+./main tests/test4.lamp
+type: ,
+match: 
+type 44 not match with 19 (,)
+TOKEN: a
+RAW:  aux is int;
+ b is float
+ begin
+ b = 0;
+ in (a);
+ in(b);
+ if (a>b) then
+ aux = b;
+ b = a;
+ a = aux
+ end;
+ write(a;
+ write(b)
+lamp exception near line: 2 
+Exception: syntax error
+
+Makefile:19: recipe for target 'run' failed
+make: [run] Error 1 (ignored)
+```
+
+> Ordem da compilação, a falta de begin após o nome do programa
+
+```
+./main tests/test4.lamp
+type: 
+match: 
+type 17 not match with 19 ()
+TOKEN: a
+RAW: , aux is int;
+ b is float
+ begin
+ b = 0;
+ in (a);
+ in(b);
+ if (a>b) then
+ aux = b;
+ b = a;
+ a = aux
+ end;
+ write(a;
+ write(b)
+lamp exception near line: 2 
+Exception: syntax error
+
+Makefile:19: recipe for target 'run' failed
+make: [run] Error 1 (ignored)
+```
+
+> Falta de `;`
+```
+./main tests/test4.lamp
+type: 
+match: ;
+type 17 not match with 59 ()
+TOKEN: b
+RAW:  = 0;
+ in (a);
+ in(b);
+ if (a>b) then
+ aux = b;
+ b = a;
+ a = aux
+ end;
+ write(a;
+ write(b)
+lamp exception near line: 5 
+Exception: syntax error
+
+Makefile:19: recipe for target 'run' failed
+make: [run] Error 1 (ignored)
+```
+> Token inexistente `in` que será trocado por `read`
+```
+./main tests/test4.lamp
+type: (
+match: 
+type 40 not match with 17 (()
+TOKEN: in
+RAW: a);
+ in(b);
+ if (a>b) then
+ aux = b;
+ b = a;
+ a = aux
+ end;
+ write(a;
+ write(b)
+lamp exception near line: 6 
+Exception: syntax error
+
+Makefile:19: recipe for target 'run' failed
+make: [run] Error 1 (ignored)
+```
+
+> Token inexistente `in` que será trocado por `read`
+```
+./main tests/test4.lamp
+type: (
+match: 
+type 40 not match with 17 (()
+TOKEN: in
+RAW: b);
+ if (a>b) then
+ aux = b;
+ b = a;
+ a = aux
+ end;
+ write(a;
+ write(b)
 lamp exception near line: 7 
-Exception: FLOAT CONST NOT FORMATTED
+Exception: syntax error
+
+Makefile:19: recipe for target 'run' failed
+make: [run] Error 1 (ignored)
+```
+> Falta de `;`
+```
+./main tests/test4.lamp
+type: ;
+match: )
+type 59 not match with 41 (;)
+TOKEN: a
+RAW: 
+ write(b)
+lamp exception near line: 12 
+Exception: syntax error
+
+Makefile:19: recipe for target 'run' failed
+make: [run] Error 1 (ignored)
+
+```
+> Falta de parentese no write
+```
+./main tests/test4.lamp
+type: ;
+match: )
+type 59 not match with 41 (;)
+TOKEN: a
+RAW: 
+ write(b)
+lamp exception near line: 13 
+Exception: syntax error
+
+Makefile:19: recipe for target 'run' failed
+make: [run] Error 1 (ignored)
+
 ```
 
-O floatpoint está com um problema de formatação, ele consta como `x = 12.;` e deve constar como `x = 12.0`.
-
-> Teste corrigido:
-> ```
-> program teste1
-> a, b is int;
-> result is int;
-> a,x is float;
-> begin
-> a = 12a;
-> x = 12.0;
-> read (a);
-> read (b);
-> read (c)
-> result = (a*b + 1) / (c+2);
-> write {Resultado: };
-> write (result);
-> end.
-> ```
-
-Compilação corrigida
+> `;` sendo usado incorretamente;
 ```
-./main tests/test2.lamp
-Token: program - Type: 1
-Token: teste1 - Type: 17
-Token: a - Type: 17
-Token: a - Type: 44
-Token: b - Type: 17
-Token: is - Type: 18
-Token: int - Type: 14
-Token: int - Type: 59
-Token: result - Type: 17
-Token: is - Type: 18
-Token: int - Type: 14
-Token: int - Type: 59
-Token: a - Type: 17
-Token: a - Type: 44
-Token: x - Type: 17
-Token: is - Type: 18
-Token: float - Type: 13
-Token: float - Type: 59
-Token: begin - Type: 19
-Token: a - Type: 17
-Token: a - Type: 61
-Token: 12 - Type: 73
-Token: a - Type: 17
-Token: a - Type: 59
-Token: x - Type: 17
-Token: x - Type: 61
-Token: 12.0 - Type: 70
-Token: 12.0 - Type: 59
-Token: read - Type: 10
-Token: read - Type: 40
-Token: a - Type: 17
-Token: a - Type: 41
-Token: a - Type: 59
-Token: read - Type: 10
-Token: read - Type: 40
-Token: b - Type: 17
-Token: b - Type: 41
-Token: b - Type: 59
-Token: read - Type: 10
-Token: read - Type: 40
-Token: c - Type: 17
-Token: c - Type: 41
-Token: result - Type: 17
-Token: result - Type: 61
-Token: result - Type: 40
-Token: a - Type: 17
-Token: a - Type: 42
-Token: b - Type: 17
-Token: b - Type: 43
-Token: 1 - Type: 73
-Token: 1 - Type: 41
-Token: 1 - Type: 40
-Token: c - Type: 17
-Token: c - Type: 43
-Token: 2 - Type: 73
-Token: 2 - Type: 41
-Token: 2 - Type: 59
-Token: write - Type: 11
-Token: Resultado:  - Type: 16
-Token: Resultado:  - Type: 59
-Token: write - Type: 11
-Token: write - Type: 40
-Token: result - Type: 17
-Token: result - Type: 41
-Token: result - Type: 59
-Token: end - Type: 69
-Token: end - Type: 46
+./main tests/test4.lamp
+type: 
+match: write
+type 0 not match with 59 ()
+TOKEN: b
+RAW: 
+lamp exception near line: 13
+Exception: syntax error
 
-
----- Hash Table ---
-@0: float => 13 | char => 15 | if => 2 | while => 8 | write => 11 | x => 17 | c => 17 | 
-@1: program => 1 | begin => 19 | is => 18 | int => 14 | until => 7 | do => 9 | read => 10 | teste1 => 17 | a => 17 | 
-@2: end => 69 | then => 3 | else => 5 | repeat => 6 | b => 17 | result => 17 | 
--------------------
+Makefile:19: recipe for target 'run' failed
+make: [run] Error 1 (ignored)
 ```
+> Falta de `;`
+```
+./main tests/test4.lamp
+type: 
+match: ;
+type 0 not match with 59 ()
+TOKEN: b
+RAW: 
+lamp exception near line: 14 
+Exception: syntax error
+
+Makefile:19: recipe for target 'run' failed
+make: [run] Error 1 (ignored)
+```
+> Falta de `end.`
+```
+./main tests/test4.lamp
+type: 
+match: ;
+type 0 not match with 59 ()
+TOKEN: b
+RAW: 
+lamp exception near line: 14 
+Exception: syntax error
+
+Makefile:19: recipe for target 'run' failed
+make: [run] Error 1 (ignored)
+```
+#### Conclusão
+O teste finalisado se encontra:
+```
+program test4
+ begin
+ a, aux is int;
+ b is float;
+ b = 0;
+ read(a);
+ read(b);
+ if (a>b) then
+ aux = b;
+ b = a;
+ a = aux;
+ end
+ write(a);
+ write(b);
+ end.
+```
+Compilando corretamente.
 
 ### Teste 5
-O teste 5 tem um erro de formatação no comentário. fechando o comentario ele vai compilar corretamente. 
-
-> Correção do codigo
+O arquivo de teste contém o seguinte conteudo no inicio da compilação:
 ```
 programa teste4
 /* Teste4 do meu compilador */
@@ -455,130 +687,229 @@ begin
  end
 end
 ```
-
-Recompilação 
+> Linha 1 contém o nome `programa` ao invés de `program`
 ```
 ./main tests/test5.lamp
-Token: programa - Type: 17
-Token: teste4 - Type: 17
-Token: pontuacao - Type: 17
-Token: pontuacao - Type: 44
-Token: pontuacaoMaxina - Type: 17
-Token: pontuacaoMaxina - Type: 44
-Token: disponibilidade - Type: 17
-Token: is - Type: 18
-Token: inteiro - Type: 17
-Token: inteiro - Type: 59
-Token: pontuacaoMinima - Type: 17
-Token: is - Type: 18
-Token: char - Type: 15
-Token: char - Type: 59
-Token: begin - Type: 19
-Token: pontuacaoMinima - Type: 17
-Token: pontuacaoMinima - Type: 61
-Token: 50 - Type: 73
-Token: 50 - Type: 59
-Token: pontuacaoMaxima - Type: 17
-Token: pontuacaoMaxima - Type: 61
-Token: 100 - Type: 73
-Token: 100 - Type: 59
-Token: write - Type: 11
-Token: write - Type: 40
-Token: Pontuacao do candidato:  - Type: 16
-Token: Pontuacao do candidato:  - Type: 41
-Token: Pontuacao do candidato:  - Type: 59
-Token: read - Type: 10
-Token: read - Type: 40
-Token: pontuacao - Type: 17
-Token: pontuacao - Type: 41
-Token: pontuacao - Type: 59
-Token: write - Type: 11
-Token: write - Type: 40
-Token: Disponibilidade do candidato:  - Type: 16
-Token: Disponibilidade do candidato:  - Type: 41
-Token: Disponibilidade do candidato:  - Type: 59
-Token: read - Type: 10
-Token: read - Type: 40
-Token: disponibilidade - Type: 17
-Token: disponibilidade - Type: 41
-Token: disponibilidade - Type: 59
-Token: while - Type: 8
-Token: while - Type: 40
-Token: pontuacao - Type: 17
-Token: pontuacao - Type: 62
-Token: pontuacao - Type: 97
-Token: pontuacao - Type: 40
-Token: pontuacao - Type: 17
-Token: pontuacao - Type: 108
-Token: pontuacaoMaxima - Type: 17
-Token: pontuacaoMaxima - Type: 41
-Token: do - Type: 9
-Token: if - Type: 2
-Token: if - Type: 40
-Token: if - Type: 40
-Token: pontua - Type: 17
-Token: pontua - Type: 17
-Token: pontua - Type: 17
-Token: pontua - Type: 17
-Token: pontua - Type: 17
-Token: o - Type: 17
-Token: o - Type: 62
-Token: pontuacaoMinima - Type: 17
-Token: pontuacaoMinima - Type: 41
-Token: pontuacaoMinima - Type: 97
-Token: pontuacaoMinima - Type: 40
-Token: disponibilidade - Type: 17
-Token: disponibilidade - Type: 22
-Token: 1 - Type: 73
-Token: 1 - Type: 41
-Token: 1 - Type: 41
-Token: then - Type: 3
-Token: write - Type: 11
-Token: write - Type: 40
-Token: Candidato aprovado. - Type: 16
-Token: Candidato aprovado. - Type: 41
-Token: else - Type: 5
-Token: write - Type: 11
-Token: write - Type: 40
-Token: Candidato reprovado. - Type: 16
-Token: Candidato reprovado. - Type: 41
-Token: end - Type: 69
-Token: write - Type: 11
-Token: write - Type: 40
-Token: Pontuacao do candidato:  - Type: 16
-Token: Pontuacao do candidato:  - Type: 41
-Token: Pontuacao do candidato:  - Type: 59
-Token: read - Type: 10
-Token: read - Type: 40
-Token: pontuacao - Type: 17
-Token: pontuacao - Type: 41
-Token: pontuacao - Type: 59
-Token: write - Type: 11
-Token: write - Type: 40
-Token: Disponibilidade do candidato:  - Type: 16
-Token: Disponibilidade do candidato:  - Type: 41
-Token: Disponibilidade do candidato:  - Type: 59
-Token: read - Type: 10
-Token: read - Type: 40
-Token: disponibilidade - Type: 17
-Token: disponibilidade - Type: 41
-Token: disponibilidade - Type: 59
-Token: end - Type: 69
-Token: end - Type: 69
+type: 
+match: 
+type 17 not match with 1 ()
+TOKEN: programa
+RAW:  teste4
+/* Teste4 do meu compilador */
+ pontuacao, pontuacaoMaxina, disponibilidade is inteiro;
+ pontuacaoMinima is char;
+begin
+ pontuacaoMinima = 50;
+ pontuacaoMaxima = 100;
+ write({Pontuacao do candidato: });
+ read(pontuacao);
+ write({Disponibilidade do candidato: });
+ read(disponibilidade);
 
+ while (pontuacao>0 && (pontuacao<=pontuacaoMaxima) do
+ if ((pontuação > pontuacaoMinima) && (disponibilidade==1)) then
+ write({Candidato aprovado.})
+ else
+ write({Candidato reprovado.})
+ end
+ write({Pontuacao do candidato: });
+ read(pontuacao);
+ write({Disponibilidade do candidato: });
+ read(disponibilidade);
+ end
+end
+lamp exception near line: 1 
+Exception: syntax error
 
----- Hash Table ---
-@0: float => 13 | char => 15 | if => 2 | while => 8 | write => 11 | disponibilidade => 17 | inteiro => 17 | pontuacaoMaxima => 17 | pontua => 17 | o => 17 | 
-@1: program => 1 | begin => 19 | is => 18 | int => 14 | until => 7 | do => 9 | read => 10 | teste4 => 17 | pontuacao => 17 | pontuacaoMaxina => 17 | pontuacaoMinima => 17 | 
-@2: end => 69 | then => 3 | else => 5 | repeat => 6 | programa => 17 | 
--------------------
+Makefile:19: recipe for target 'run' failed
+make: [run] Error 1 (ignored)
 ```
 
+> Ordem da declaração está errada, `begin` deve vir logo após nome do programa
+```
+❯ make run ARGS=tests/test5.lamp
+./main tests/test5.lamp
+type: 
+match: 
+type 17 not match with 19 ()
+TOKEN: pontuacao
+RAW: , pontuacaoMaxina, disponibilidade is inteiro;
+ pontuacaoMinima is char;
+begin
+ pontuacaoMinima = 50;
+ pontuacaoMaxima = 100;
+ write({Pontuacao do candidato: });
+ read(pontuacao);
+ write({Disponibilidade do candidato: });
+ read(disponibilidade);
+
+ while (pontuacao>0 && (pontuacao<=pontuacaoMaxima) do
+ if ((pontuação > pontuacaoMinima) && (disponibilidade==1)) then
+ write({Candidato aprovado.})
+ else
+ write({Candidato reprovado.})
+ end
+ write({Pontuacao do candidato: });
+ read(pontuacao);
+ write({Disponibilidade do candidato: });
+ read(disponibilidade);
+ end
+end
+lamp exception near line: 3 
+Exception: syntax error
+
+Makefile:19: recipe for target 'run' failed
+make: [run] Error 1 (ignored)
+```
+
+> Identificador `inteiro nao existe`
+```
+./main tests/test5.lamp
+type: 
+match: ;
+type 17 not match with 59 ()
+TOKEN: inteiro
+RAW: ;
+ pontuacaoMinima is char;
+ pontuacaoMinima = 50;
+ pontuacaoMaxima = 100;
+ write({Pontuacao do candidato: });
+ read(pontuacao);
+ write({Disponibilidade do candidato: });
+ read(disponibilidade);
+
+ while (pontuacao>0 && (pontuacao<=pontuacaoMaxima) do
+ if ((pontuação > pontuacaoMinima) && (disponibilidade==1)) then
+ write({Candidato aprovado.})
+ else
+ write({Candidato reprovado.})
+ end
+ write({Pontuacao do candidato: });
+ read(pontuacao);
+ write({Disponibilidade do candidato: });
+ read(disponibilidade);
+ end
+end
+lamp exception near line: 4 
+Exception: syntax error
+
+Makefile:19: recipe for target 'run' failed
+make: [run] Error 1 (ignored)
+```
+
+> Parentese não fechado. 
+```
+./main tests/test5.lamp
+type: 
+match: )
+type 22 not match with 41 ()
+TOKEN: &&
+RAW: && (pontuacao<=pontuacaoMaxima) do
+ if ((pontuação > pontuacaoMinima) && (disponibilidade==1)) then
+ write({Candidato aprovado.})
+ else
+ write({Candidato reprovado.})
+ end
+ write({Pontuacao do candidato: });
+ read(pontuacao);
+ write({Disponibilidade do candidato: });
+ read(disponibilidade);
+ end
+end
+lamp exception near line: 4 
+Exception: syntax error
+
+Makefile:19: recipe for target 'run' failed
+make: [run] Error 1 (ignored)
+```
+>  Pontuação não pode ser usado na gramatica. 
+
+```
+./main tests/test5.lamp
+lamp exception near line: 14 
+Exception: MALFORMATED RAW STRING
+
+Makefile:19: recipe for target 'run' failed
+make: [run] Error 1 (ignored)
+```
+> Falta de `;`
+```
+```
+./main tests/test5.lamp
+type: end
+match: ;
+type 69 not match with 59 ()
+TOKEN: &&
+RAW:
+ end
+ write({Pontuacao do candidato: });
+ read(pontuacao);
+ write({Disponibilidade do candidato: });
+ read(disponibilidade);
+ end
+end
+lamp exception near line: 4 
+Exception: syntax error
+
+Makefile:19: recipe for target 'run' failed
+make: [run] Error 1 (ignored)
+```
+>  Pontuação não pode ser usado na gramatica. 
+
+```
+./main tests/test5.lamp
+lamp exception near line: 14 
+Exception: MALFORMATED RAW STRING
+
+Makefile:19: recipe for target 'run' failed
+make: [run] Error 1 (ignored)
+```
+```
+
+> Falta de simbolo terminal no fim da execução. 
+```
+./main tests/test5.lamp
+type: 
+match: .
+type 0 not match with 46 ()
+TOKEN: end
+RAW: 
+lamp exception near line: 24 
+Exception: syntax error
+
+Makefile:19: recipe for target 'run' failed
+make: [run] Error 1 (ignored)
+```
+#### Correção
+Codigo pós correção se encontra:
+```
+program teste4
+/* Teste4 do meu compilador */
+begin
+ pontuacao, pontuacaoMaxina, disponibilidade is int;
+ pontuacaoMinima is char;
+ pontuacaoMinima = 50;
+ pontuacaoMaxima = 100;
+ write({Pontuacao do candidato: });
+ read(pontuacao);
+ write({Disponibilidade do candidato: });
+ read(disponibilidade);
+
+ while (pontuacao>0) && (pontuacao<=pontuacaoMaxima) do
+ if ((pontuacao > pontuacaoMinima) && (disponibilidade==1)) then
+ write({Candidato aprovado.});
+ else
+ write({Candidato reprovado.})
+ end
+ write({Pontuacao do candidato: });
+ read(pontuacao);
+ write({Disponibilidade do candidato: });
+ read(disponibilidade);
+ end
+end.
+```
 ### Teste 6
-
-O caractere `'n` está mal formatado, a correção para `'n'` corrige a compilação.
-
-> Correção do codigo
+O arquivo de teste contém o seguinte conteudo no inicio da compilação:
 ```
 /* Teste do meu compilador */
 program teste5
@@ -610,131 +941,251 @@ begin
  until (outro == 'N' || outro == 'n')
 end
 ```
-Recompilação
+### Correção
+> Econtra com a o `begin` fora de posição
 ```
-test6.lamp... 
-Token: program - Type: 1
-Token: teste5 - Type: 17
-Token: a - Type: 17
-Token: a - Type: 44
-Token: b - Type: 17
-Token: b - Type: 44
-Token: c - Type: 17
-Token: c - Type: 44
-Token: maior - Type: 17
-Token: is - Type: 18
-Token: int - Type: 14
-Token: int - Type: 59
-Token: outro - Type: 17
-Token: is - Type: 18
-Token: char - Type: 15
-Token: char - Type: 59
-Token: begin - Type: 19
-Token: repeat - Type: 6
-Token: write - Type: 11
-Token: write - Type: 40
-Token: A - Type: 16
-Token: A - Type: 41
-Token: A - Type: 59
-Token: read - Type: 10
-Token: read - Type: 40
-Token: a - Type: 17
-Token: a - Type: 41
-Token: a - Type: 59
-Token: write - Type: 11
-Token: write - Type: 40
-Token: B - Type: 16
-Token: B - Type: 41
-Token: B - Type: 59
-Token: read - Type: 10
-Token: read - Type: 40
-Token: b - Type: 17
-Token: b - Type: 41
-Token: b - Type: 59
-Token: write - Type: 11
-Token: write - Type: 40
-Token: C - Type: 16
-Token: C - Type: 41
-Token: C - Type: 59
-Token: read - Type: 10
-Token: read - Type: 40
-Token: c - Type: 17
-Token: c - Type: 41
-Token: c - Type: 59
-Token: if - Type: 2
-Token: if - Type: 40
-Token: if - Type: 40
-Token: a - Type: 17
-Token: a - Type: 62
-Token: a - Type: 41
-Token: a - Type: 97
-Token: a - Type: 40
-Token: a - Type: 17
-Token: a - Type: 62
-Token: a - Type: 41
-Token: a - Type: 41
-Token: end - Type: 69
-Token: maior - Type: 17
-Token: maior - Type: 61
-Token: a - Type: 17
-Token: else - Type: 5
-Token: if - Type: 2
-Token: if - Type: 40
-Token: b - Type: 17
-Token: b - Type: 62
-Token: b - Type: 41
-Token: then - Type: 3
-Token: maior - Type: 17
-Token: maior - Type: 61
-Token: b - Type: 17
-Token: b - Type: 59
-Token: else - Type: 5
-Token: maior - Type: 17
-Token: maior - Type: 61
-Token: c - Type: 17
-Token: end - Type: 69
-Token: end - Type: 69
-Token: end - Type: 59
-Token: write - Type: 11
-Token: write - Type: 40
-Token: Maior valor: - Type: 16
-Token: Maior valor: - Type: 16
-Token: Maior valor: - Type: 41
-Token: Maior valor: - Type: 59
-Token: write - Type: 11
-Token: write - Type: 40
-Token: maior - Type: 17
-Token: maior - Type: 41
-Token: maior - Type: 59
-Token: write - Type: 11
-Token: write - Type: 40
-Token: Outro? (S/N) - Type: 16
-Token: Outro? (S/N) - Type: 41
-Token: Outro? (S/N) - Type: 59
-Token: read - Type: 10
-Token: read - Type: 40
-Token: outro - Type: 17
-Token: outro - Type: 41
-Token: outro - Type: 59
-Token: until - Type: 7
-Token: until - Type: 40
-Token: outro - Type: 17
-Token: outro - Type: 22
-Token: outro - Type: 67
-Token: outro - Type: 111
-Token: outro - Type: 17
-Token: outro - Type: 22
-Token: outro - Type: 67
-Token: outro - Type: 41
-Token: end - Type: 69
+./main tests/test6.lamp
+type: 
+match: 
+type 17 not match with 19 ()
+TOKEN: a
+RAW: , b, c, maior is int;
+ outro is char;
+begin
+ repeat
+ write({A});
+ read(a);
+ write({B});
+ read(b);
+ write({C});
+ read(c);
+ if ( (a>b) && (a>c) ) end
+ maior = a
 
+ else
+ if (b>c) then
+ maior = b;
 
----- Hash Table ---
-@0: float => 13 | char => 15 | if => 2 | while => 8 | write => 11 | c => 17 | 
-@1: program => 1 | begin => 19 | is => 18 | int => 14 | until => 7 | do => 9 | read => 10 | a => 17 | 
-@2: end => 69 | then => 3 | else => 5 | repeat => 6 | teste5 => 17 | b => 17 | maior => 17 | outro => 17 | 
--------------------
+ else
+ maior = c
+ end
+ end;
+ write({Maior valor:}});
+ write (maior);
+ write ({Outro? (S/N)});
+ read(outro);
+ until (outro == 'N' || outro == 'n')
+end
+lamp exception near line: 3 
+Exception: syntax error
+
+Makefile:19: recipe for target 'run' failed
+make: [run] Error 1 (igno
+```
+
+> Uso de `end` ao invez de `then`
+```
+./main tests/test6.lamp
+type: 
+match: .
+type 17 not match with 46 ()
+TOKEN: maior
+RAW:  = a;
+
+ else
+ if (b>c) then
+ maior = b;
+
+ else
+ maior = c
+ end
+ end;
+ write({Maior valor:}});
+ write (maior);
+ write ({Outro? (S/N)});
+ read(outro);
+ until (outro == 'N' || outro == 'n')
+end
+lamp exception near line: 14 
+Exception: syntax error
+
+Makefile:19: recipe for target 'run' failed
+make: [run] Error 1 (ignored)
+```
+
+> Falta de `;`
+```
+./main tests/test6.lamp
+type: ;
+match: .
+type 59 not match with 46 (;)
+TOKEN: end
+RAW: 
+ write({Maior valor:}});
+ write (maior);
+ write ({Outro? (S/N)});
+ read(outro);
+ until (outro == 'N' || outro == 'n')
+end
+lamp exception near line: 23 
+Exception: syntax error
+
+Makefile:19: recipe for target 'run' failed
+make: [run] Error 1 (ignored)
+```
+> Falta de `;`
+```
+./main tests/test6.lamp
+type: ;
+match: .
+type 59 not match with 46 (;)
+TOKEN: end
+RAW: 
+ write({Maior valor:}});
+ write (maior);
+ write ({Outro? (S/N)});
+ read(outro);
+ until (outro == 'N' || outro == 'n')
+end
+lamp exception near line: 23 
+Exception: syntax error
+
+Makefile:19: recipe for target 'run' failed
+make: [run] Error 1 (ignored)
 
 ```
+> Soma de `;`
+
+```./main tests/test6.lamp
+type: ;
+match: .
+type 59 not match with 46 (;)
+TOKEN: end
+RAW: 
+ write({Maior valor:}});
+ write (maior);
+ write ({Outro? (S/N)});
+ read(outro);
+ until (outro == 'N' || outro == 'n')
+end
+lamp exception near line: 23 
+Exception: syntax error
+
+Makefile:19: recipe for target 'run' failed
+make: [run] Error 1 (ignored)
+
+```
+> String literal mal formatada
+```
+./main tests/test6.lamp
+lamp exception near line: 23 
+Exception: MALFORMATED RAW STRING
+
+Makefile:19: recipe for target 'run' failed
+make: [run] Error 1 (ignored)
+```
+
+> Falta de simbolo terminal `.`
+```
+./main tests/test6.lamp
+type: 
+match: .
+type 0 not match with 46 ()
+TOKEN: end
+RAW: 
+lamp exception near line: 28 
+Exception: syntax error
+
+Makefile:19: recipe for target 'run' failed
+make: [run] Error 1 (ignored)
+```
+#### Conclusão
+O codigo corrigido ficará
+```
+/* Teste do meu compilador */
+program teste5
+begin
+ a, b, c, maior is int;
+ outro is char;
+ repeat
+ write({A});
+ read(a);
+ write({B});
+ read(b);
+ write({C});
+ read(c);
+ if ( (a>b) && (a>c) ) then
+ maior = a;
+ end
+ if (b>c) then
+ maior = b;
+ else
+ maior = c;
+ end
+ write({Maior valor:});
+ write (maior);
+ write ({Outro? (S/N)});
+ read(outro);
+ until (outro == 'N' || outro == 'n')
+end.
+```
+### Teste 7
+O codigo no inicio da execução era
+```
+/* Test */
+program teste1
+    a is int;
+    b is float;
+begin
+    write(a+b);
+end
+```
+#### Correção
+> Encontra-se na ordem incorreta o begin e o write
+```
+./main tests/test7.lamp
+type: 
+match: 
+type 17 not match with 19 ()
+TOKEN: a
+RAW:  is int;
+    b is float;
+begin
+    write(a+b);
+end
+lamp exception near line: 3 
+Exception: syntax error
+
+Makefile:19: recipe for target 'run' failed
+make: [run] Error 1 (ignored)
+```
+> Falta do simbolo terminal `.`
+```
+./main tests/test7.lamp
+type: 
+match: .
+type 0 not match with 46 ()
+TOKEN: end
+RAW: 
+lamp exception near line: 7 
+Exception: syntax error
+
+Makefile:19: recipe for target 'run' failed
+make: [run] Error 1 (ignored)
+```
+#### Correção
+O Codigo final ficaria: 
+```
+/* Test */
+program teste1
+begin
+    a is int;
+    b is float;
+    write(a+b);
+end.
+```
+### Considerações
+O codigo está em um arquivo apenas, dado que queriamos experimentar uma implementação em C pois precisariamos da mesma para algumas materias no futuro do nosso curso e não tivemos muito contato com a mesma. Com isso o codigo pode conter duplicações e problemas de padrões de C dado o contexto que cada um de nós (Lara e João) estamos inseridos. 
+
 
 ## Autores João Victor Mazagão e Lara Loures

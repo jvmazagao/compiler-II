@@ -1,8 +1,8 @@
 /* Teste do meu compilador */
 program teste5
+begin
  a, b, c, maior is int;
  outro is char;
-begin
  repeat
  write({A});
  read(a);
@@ -10,20 +10,17 @@ begin
  read(b);
  write({C});
  read(c);
- if ( (a>b) && (a>c) ) end
- maior = a
-
- else
+ if ( (a>b) && (a>c) ) then
+ maior = a;
+ end
  if (b>c) then
  maior = b;
-
  else
- maior = c
+ maior = c;
  end
- end;
- write({Maior valor:}});
+ write({Maior valor:});
  write (maior);
  write ({Outro? (S/N)});
  read(outro);
  until (outro == 'N' || outro == 'n')
-end
+end.
