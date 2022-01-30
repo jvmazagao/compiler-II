@@ -4,6 +4,7 @@
 #include <string.h>
 
 typedef char* ht_key_t;
+typedef int ht_type_t;
 typedef int ht_value_t;
 
 // key => value plus pointer to next item for hash collisions
@@ -11,6 +12,7 @@ typedef struct HashTableItem HashTableItem;
 struct HashTableItem {
   ht_key_t       key;
   ht_value_t     value;
+  ht_type_t      type;
   HashTableItem* next;
 };
 
@@ -22,10 +24,11 @@ typedef struct HashTable {
 } HashTable;
 
 // Creates a pointer to a new hash table item
-HashTableItem* ht_create_item(ht_key_t key, ht_value_t value) {
+HashTableItem* ht_create_item(ht_key_t key, ht_value_t value, ht_type_t type) {
   HashTableItem* item = malloc(sizeof *item);
   item->key           = strdup(key);
   item->value         = value;
+  item->type          = type;
   item->next          = NULL;
   return item;
 }
@@ -67,19 +70,33 @@ size_t hash_function(HashTable* table, const char* str) {
 }
 
 // Inserts (or updates if exists) an item
-void ht_insert(HashTable* table, ht_key_t key, ht_value_t value) {
+void ht_insert(HashTable* table, ht_key_t key, ht_value_t value, ht_type_t type) {
   HashTableItem** slot = &table->items[hash_function(table, key)];
   HashTableItem*  item = *slot;
   if (!item) table->count++;  // HashTable accounting (while will not run)
   while (item) {
     if (strcmp(item->key, key) == 0) {
       item->value = value; // exists, update value
+      item->type = type;
       return;
     }
     slot = &item->next;
     item = *slot;
   }
-  *slot = ht_create_item(key, value);
+  *slot = ht_create_item(key, value, type);
+}
+
+void ht_update(HashTable* table, ht_key_t key, ht_type_t type) {
+    HashTableItem** slot = &table->items[hash_function(table, key)];
+    HashTableItem*  item = *slot;
+    while (item) {
+        if (strcmp(item->key, key) == 0) {
+            item->type = type;
+            return;
+        }
+        slot = &item->next;
+        item = *slot;
+    }
 }
 
 // Deletes an item from the table
@@ -118,7 +135,7 @@ void ht_print(HashTable* table) {
     printf("@%zu: ", i);
     HashTableItem* item = table->items[i];
     while (item) {
-      printf("%s => %d | ", item->key, item->value);
+      printf("%s => %d : %d | ", item->key, item->value, item->type);
       item = item->next;
     }
     printf("\n");

@@ -8,6 +8,7 @@
 #include <ctype.h>
 #include <limits.h>
 #include "hashtable.h"
+#include "list.h"
 #include <regex.h>
 
 #define TOKEN_PROGRAM 1
@@ -65,11 +66,6 @@ static void error(const char *fmt, ...)
     va_end(ap);
     (void)fputc('\n', stderr);
     exit(1);
-}
-
-static void debug(char *value)
-{
-    (void)fputs(value, stdout);
 }
 
 static void readin(char **file)
@@ -352,18 +348,27 @@ static void expect(int match)
     next();
 }
 
-static void block(HashTable *ht)
+static LinkedList *typingIdentifiers(HashTable *ht, LinkedList *identifiers, int identifier);
+
+static int block(HashTable *ht)
 {
+    LinkedList* identifiers = create();
     bool write_state = false;
     bool if_state = false;
     bool while_state = false;
+
     bool then_state = false;
     bool do_state = false;
     bool repeat_state = true;
 
-    int lparen_depth = 0;
-
     goto program;
+
+program:
+    expect(TOKEN_PROGRAM);
+    expect(TOKEN_IDENTIFIER);
+    ht_insert(ht, token, TOKEN_IDENTIFIER, TOKEN_CHARACTER);
+    expect(TOKEN_BEGIN);
+    goto decl_list;
 
 decl_list:
     goto decl;
@@ -385,11 +390,13 @@ ident_list:
     goto identifier;
 
 identifier:
-    expect(TOKEN_IDENTIFIER);
     if (ht_search(ht, token) == NULL)
     {
-        ht_insert(ht, token, TOKEN_IDENTIFIER);
+        ht_insert(ht, token, TOKEN_IDENTIFIER, TOKEN_IDENTIFIER);
     }
+    HashTableItem *item = ht_search(ht, token);
+    insertFirst(identifiers, item->key);
+    expect(TOKEN_IDENTIFIER);
     if (type == TOKEN_ASSIGN)
     {
         expect(TOKEN_ASSIGN);
@@ -400,14 +407,18 @@ identifier:
 type_assign:
     if (type == TOKEN_INTEGER)
     {
+        identifiers = typingIdentifiers(ht, identifiers, TOKEN_INTEGER);
         expect(TOKEN_INTEGER);
     }
     if (type == TOKEN_FLOAT)
     {
+        printList(identifiers);
+        identifiers = typingIdentifiers(ht, identifiers, TOKEN_FLOAT);
         expect(TOKEN_FLOAT);
     }
     if (type == TOKEN_CHARACTER)
     {
+        identifiers = typingIdentifiers(ht, identifiers, TOKEN_CHARACTER);
         expect(TOKEN_CHARACTER);
     }
 
@@ -462,7 +473,7 @@ stmt_list:
         expect(TOKEN_END);
         expect(TOKEN_EOF);
         (void)fputs("Compilation Succesfull. Exiting\n", stdout);
-        exit(0);
+        return 0;
     default:
         expect(TOKEN_SEMICOLON);
         goto stmt;
@@ -499,10 +510,6 @@ until_stmt:
     repeat_state = false;
     goto simple_expr;
 
-else_stmt:
-    expect(TOKEN_ELSE);
-    goto stmt_list;
-
 do_stmt:
     expect(TOKEN_DO);
     do_state = true;
@@ -522,9 +529,6 @@ then_stmt:
     then_state = true;
     expect(TOKEN_THEN);
     goto stmt_list;
-
-condition:
-    goto simple_expr;
 
 read_stmt:
     expect(TOKEN_READ);
@@ -693,13 +697,22 @@ constants:
         expect(TOKEN_SEMICOLON);
         goto stmt;
     }
+}
 
-program:
-    expect(TOKEN_PROGRAM);
-    expect(TOKEN_IDENTIFIER);
-    ht_insert(ht, token, TOKEN_IDENTIFIER);
-    expect(TOKEN_BEGIN);
-    goto decl_list;
+static LinkedList *typingIdentifiers(HashTable *ht, LinkedList *identifiers, int identifier_type) {
+    node* ptr = identifiers->head;
+    do {
+        if (ptr->data != NULL) {
+            ht_insert(ht,
+                      ptr->data,
+                      TOKEN_IDENTIFIER,
+                      identifier_type);
+        }
+
+        ptr = ptr->next;
+    } while (ptr != NULL);
+    identifiers = reset(identifiers);
+    return identifiers;
 }
 
 static void parser(HashTable *ht)
@@ -712,37 +725,37 @@ static words(HashTable
                  *ht)
 {
     ht_insert(ht,
-              "program", TOKEN_PROGRAM);
+              "program", TOKEN_PROGRAM, TOKEN_PROGRAM);
     ht_insert(ht,
-              "begin", TOKEN_BEGIN);
+              "begin", TOKEN_BEGIN, TOKEN_BEGIN);
     ht_insert(ht,
-              "end", TOKEN_END);
+              "end", TOKEN_END, TOKEN_END);
     ht_insert(ht,
-              "is", TOKEN_IS);
+              "is", TOKEN_IS, TOKEN_IS);
     ht_insert(ht,
-              "int", TOKEN_INTEGER);
+              "int", TOKEN_INTEGER, TOKEN_INTEGER);
     ht_insert(ht,
-              "float", TOKEN_FLOAT);
+              "float", TOKEN_FLOAT, TOKEN_FLOAT);
     ht_insert(ht,
-              "char", TOKEN_CHARACTER);
+              "char", TOKEN_CHARACTER, TOKEN_CHARACTER);
     ht_insert(ht,
-              "if", TOKEN_IF);
+              "if", TOKEN_IF,TOKEN_IF);
     ht_insert(ht,
-              "then", TOKEN_THEN);
+              "then", TOKEN_THEN, TOKEN_THEN);
     ht_insert(ht,
-              "else", TOKEN_ELSE);
+              "else", TOKEN_ELSE, TOKEN_ELSE);
     ht_insert(ht,
-              "repeat", TOKEN_REPEAT);
+              "repeat", TOKEN_REPEAT, TOKEN_REPEAT);
     ht_insert(ht,
-              "until", TOKEN_UNTIL);
+              "until", TOKEN_UNTIL, TOKEN_UNTIL);
     ht_insert(ht,
-              "while", TOKEN_WHILE);
+              "while", TOKEN_WHILE, TOKEN_WHILE);
     ht_insert(ht,
-              "do", TOKEN_DO);
+              "do", TOKEN_DO, TOKEN_DO);
     ht_insert(ht,
-              "read", TOKEN_READ);
+              "read", TOKEN_READ, TOKEN_READ);
     ht_insert(ht,
-              "write", TOKEN_WRITE);
+              "write", TOKEN_WRITE, TOKEN_WRITE);
 }
 
 int main(int argc, char *argv[])

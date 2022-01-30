@@ -9,6 +9,7 @@ OBJS =	main.o strtonum.o
 all: ${OBJS}
 	${CC} ${LDFLAGS} -o ${PROG} ${OBJS}
 
+.PHONY:
 test:
 	cd tests && ./test.sh
 
