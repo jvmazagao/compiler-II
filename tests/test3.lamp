@@ -1,7 +1,7 @@
 program teste2
 begin
  a, b, c is int;
- d, var is float;
+ d, var, val is float;
  teste2 = 1;
  read (a);
  b = a * a;

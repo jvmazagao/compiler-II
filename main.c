@@ -273,8 +273,12 @@ again:
     case '{':
         return literal();
     case '/':
-        if (comment() == TOKEN_COMMENT)
+        if(*++raw == '*'){
+            *--raw;
+            comment();
             goto again;
+        }
+        *--raw;
         return TOKEN_QUOTIENT;
     case '=':
         if (*++raw == '=')
@@ -287,10 +291,12 @@ again:
     case '>':
         if (*++raw == '=')
             return TOKEN_GREATER_THAN_EQUALS;
+        *--raw;
         return TOKEN_GREATER;
     case '<':
         if (*++raw == '=')
             return TOKEN_LESSER_THAN_EQUALS;
+        *--raw;
         return TOKEN_LESSER;
     case '+':
         return TOKEN_SUM;
@@ -350,16 +356,62 @@ static void expect(int match)
 
 static LinkedList *typingIdentifiers(HashTable *ht, LinkedList *identifiers, int identifier);
 
+static LinkedList *extractTokens(HashTable *ht, LinkedList *identifiers, char *operator);
+
+static LinkedList *semantic(HashTable *ht, LinkedList *variable);
+
+static bool compType(char *operator, HashTableItem* type_a, HashTableItem* type_b);
+
+static int extractType(char *action, HashTableItem* item_a, HashTableItem* item_b);
+
+static bool isOperator(char *operator)
+{
+    if (!strcmp(operator, "+"))
+    {
+        return true;
+    }
+
+    if (!strcmp(operator, "*"))
+    {
+        return true;
+    }
+
+    if (!strcmp(operator, "="))
+    {
+        return true;
+    }
+
+    if (!strcmp(operator, "Q"))
+    {
+        return true;
+    }
+
+    if( !strcmp(operator, "LT") ||
+        !strcmp(operator, "LTE") ||
+        !strcmp(operator, "EQ") ||
+        !strcmp(operator, "GTE") ||
+        !strcmp(operator, "GT") ||
+        !strcmp(operator, "DIFF")
+        ) {
+            return true;
+        }
+
+    return false;
+}
+
 static int block(HashTable *ht)
 {
-    LinkedList* identifiers = create();
+    LinkedList *identifiers = create();
+    LinkedList *variables = create();
+    bool exec_state = false;
+    char *aux;
     bool write_state = false;
     bool if_state = false;
     bool while_state = false;
 
     bool then_state = false;
     bool do_state = false;
-    bool repeat_state = true;
+    bool repeat_state = false;
 
     goto program;
 
@@ -390,15 +442,23 @@ ident_list:
     goto identifier;
 
 identifier:
-    if (ht_search(ht, token) == NULL)
+    if (!exec_state && ht_search(ht, token) == NULL)
     {
         ht_insert(ht, token, TOKEN_IDENTIFIER, TOKEN_IDENTIFIER);
     }
-    HashTableItem *item = ht_search(ht, token);
-    insertFirst(identifiers, item->key);
+    if (!exec_state)
+    {
+        identifiers = extractTokens(ht, identifiers, NULL);
+    } 
+    aux = token;
     expect(TOKEN_IDENTIFIER);
     if (type == TOKEN_ASSIGN)
     {
+        exec_state = true;
+        identifiers = reset(identifiers);
+        variables = extractTokens(ht, variables, aux);
+        aux = NULL;
+        variables = extractTokens(ht, variables, "=");
         expect(TOKEN_ASSIGN);
         goto simple_expr;
     }
@@ -412,7 +472,6 @@ type_assign:
     }
     if (type == TOKEN_FLOAT)
     {
-        printList(identifiers);
         identifiers = typingIdentifiers(ht, identifiers, TOKEN_FLOAT);
         expect(TOKEN_FLOAT);
     }
@@ -475,6 +534,10 @@ stmt_list:
         (void)fputs("Compilation Succesfull. Exiting\n", stdout);
         return 0;
     default:
+        if (!isEmpty(variables))
+        {
+            variables = semantic(ht, variables);
+        }
         expect(TOKEN_SEMICOLON);
         goto stmt;
     }
@@ -587,6 +650,7 @@ simple_expr:
     case TOKEN_CHAR_CONST:
         goto constants;
     case TOKEN_IDENTIFIER:
+        variables = extractTokens(ht, variables, NULL);
         expect(TOKEN_IDENTIFIER);
         goto simple_expr;
     case TOKEN_LPAREN:
@@ -594,7 +658,7 @@ simple_expr:
         goto simple_expr;
     case TOKEN_RPAREN:
         if (write_state == true)
-        {   
+        {
             write_state = false;
         }
         expect(TOKEN_RPAREN);
@@ -605,6 +669,10 @@ simple_expr:
             expect(TOKEN_RPAREN);
             write_state = false;
         }
+        if (!isEmpty(variables))
+        {
+            variables = semantic(ht, variables);
+        }
         goto stmt_list;
     }
 
@@ -612,21 +680,27 @@ relop:
     switch (type)
     {
     case TOKEN_LESSER_THAN_EQUALS:
+        variables = extractTokens(ht, variables, "LTE");
         expect(TOKEN_LESSER_THAN_EQUALS);
         goto simple_expr;
     case TOKEN_LESSER:
+        variables = extractTokens(ht, variables, "LT");
         expect(TOKEN_LESSER);
         goto simple_expr;
     case TOKEN_EQUALS:
+        variables = extractTokens(ht, variables, "EQ");
         expect(TOKEN_EQUALS);
         goto simple_expr;
     case TOKEN_GREATER:
+        variables = extractTokens(ht, variables, "GT");
         expect(TOKEN_GREATER);
         goto simple_expr;
     case TOKEN_GREATER_THAN_EQUALS:
+        variables = extractTokens(ht, variables, "GTE");
         expect(TOKEN_GREATER_THAN_EQUALS);
         goto simple_expr;
     case TOKEN_DIFFERENT:
+        variables = extractTokens(ht, variables, "DIFF");
         expect(TOKEN_DIFFERENT);
         goto simple_expr;
     }
@@ -635,12 +709,15 @@ mulop:
     switch (type)
     {
     case TOKEN_MULTIPLY:
+        variables = extractTokens(ht, variables, "*");
         expect(TOKEN_MULTIPLY);
         goto simple_expr;
     case TOKEN_QUOTIENT:
-        expect(TOKEN_MINUS);
+        variables = extractTokens(ht, variables, "Q");
+        expect(TOKEN_QUOTIENT);
         goto simple_expr;
     case TOKEN_AND:
+        variables = extractTokens(ht, variables, "AND");
         expect(TOKEN_AND);
         goto simple_expr;
     }
@@ -649,12 +726,15 @@ addop:
     switch (type)
     {
     case TOKEN_SUM:
+        variables = extractTokens(ht, variables, "+");
         expect(TOKEN_SUM);
         goto simple_expr;
     case TOKEN_MINUS:
+        variables = extractTokens(ht, variables, "-");
         expect(TOKEN_MINUS);
         goto simple_expr;
     case TOKEN_OR:
+        variables = extractTokens(ht, variables, "OR");
         expect(TOKEN_OR);
         goto simple_expr;
     }
@@ -663,14 +743,19 @@ constants:
     switch (type)
     {
     case TOKEN_INTEGER_CONST:
+        variables = extractTokens(ht, variables, "IC");
         expect(TOKEN_INTEGER_CONST);
         goto operator;
     case TOKEN_FLOAT_CONST:
+        variables = extractTokens(ht, variables, "FC");
         expect(TOKEN_FLOAT_CONST);
         goto operator;
     case TOKEN_CHAR_CONST:
+        variables = extractTokens(ht, variables, "CC");
         expect(TOKEN_CHAR_CONST);
         goto operator;
+    default:
+        goto simple_expr;
     }
 
     operator: switch(type)
@@ -694,15 +779,213 @@ constants:
     case TOKEN_RPAREN:
         goto simple_expr;
     default:
-        expect(TOKEN_SEMICOLON);
         goto stmt;
     }
 }
 
-static LinkedList *typingIdentifiers(HashTable *ht, LinkedList *identifiers, int identifier_type) {
-    node* ptr = identifiers->head;
-    do {
-        if (ptr->data != NULL) {
+static LinkedList *semantic(HashTable *ht, LinkedList *variable)
+{
+    node *ptr = variable->head;
+    char *operator;
+    HashTableItem* type_a = malloc(sizeof(HashTableItem*));
+    HashTableItem* type_b = malloc(sizeof(HashTableItem*));
+    HashTableItem* type = malloc(sizeof(HashTableItem*));
+    do
+    {
+        if (ptr->data != NULL)
+        {
+            char *value = ptr->data;
+            if (isOperator(value))
+            {
+                operator= value;
+            }
+            else
+            {
+                HashTableItem *item = ht_search(ht, value);
+                if (type_b->key == NULL)
+                {
+                    if (item)
+                    {
+                        type_b = item;
+                    }
+                    else
+                    {   
+                        char *data = ptr->data;
+                        if (!strcmp(data, "IC"))
+                        {
+                            type_b = ht_create_item(data, TOKEN_INTEGER_CONST, TOKEN_INTEGER);
+                        }
+                        else if (!strcmp(data, "IF"))
+                        {
+                            type_b = ht_create_item(data, TOKEN_FLOAT_CONST, TOKEN_FLOAT);
+                        }
+                        else if (!strcmp(data, "IC"))
+                        {
+                            type_b =  ht_create_item(data, TOKEN_CHAR_CONST, TOKEN_CHARACTER);
+                        }
+                    }
+                }
+                else if (type_b->key == NULL)
+                {
+                    if (item)
+                    {
+                        type_a = item->type;
+                    }
+                    else
+                    {
+                        char *data = ptr->data;
+                        if (!strcmp(data, "IC"))
+                        {
+                            type_b = ht_create_item(data, TOKEN_INTEGER_CONST, TOKEN_INTEGER);
+                        }
+                        else if (!strcmp(data, "IF"))
+                        {
+                            type_b =  ht_create_item(data, TOKEN_FLOAT_CONST, TOKEN_FLOAT);
+                        }
+                        else if (!strcmp(data, "IC"))
+                        {
+                            type_b =  ht_create_item(data, TOKEN_CHAR_CONST, TOKEN_CHARACTER);
+                        }
+                    }
+                }
+                if (type_b->key != NULL && type_a->key != NULL && operator!= NULL)
+                {
+                    if (!compType(operator, type_a, type_b))
+                    {
+                        error("semantic error");
+                    }
+                    else
+                    {
+                        if (ptr->next != NULL)
+                        {
+                            type = extractType(operator, type_a, type_b);
+                        }
+                        if (type != NULL)
+                        {
+                            type_b = type;
+                        }
+                        else
+                        {
+                            type_b = NULL;
+                        }
+                        operator= NULL;
+                        type_a = NULL;
+                    }
+                }
+            }
+        }
+        ptr = ptr->next;
+    } while (ptr != NULL);
+    return create();
+}
+
+static int extractType(char *action, HashTableItem* item_a, HashTableItem* item_b)
+{
+    int type_a = item_a->type;
+    int type_b = item_b->type;
+    if (!compType(action, type_a, type_b))
+    {
+        if (!strcmp(action, "*"))
+        {
+            if (type_a == type_b)
+            {
+                return type_a;
+            }
+            return TOKEN_FLOAT;
+        }
+        if (!strcmp(action, "Q"))
+        {
+            return TOKEN_FLOAT;
+        }
+    }
+}
+
+static bool compType(char *operator, HashTableItem *item_a, HashTableItem *item_b)
+{
+    int type_a = item_a->type;
+    int type_b = item_b->type;
+    if (!strcmp(operator, "+") || !strcmp(operator, "-"))
+    {
+        if ((type_a == TOKEN_INTEGER ||
+             type_a == TOKEN_INTEGER_CONST ||
+             type_a == TOKEN_FLOAT_CONST ||
+             type_a == TOKEN_FLOAT) &&
+            (type_b == TOKEN_INTEGER ||
+             type_b == TOKEN_INTEGER_CONST ||
+             type_b == TOKEN_FLOAT_CONST ||
+             type_b == TOKEN_FLOAT))
+        {
+            return true;
+        }
+    }
+
+    if (!strcmp(operator, "*") || !strcmp(operator, "Q"))
+    {
+        if ((type_a == TOKEN_INTEGER ||
+             type_a == TOKEN_INTEGER_CONST ||
+             type_a == TOKEN_FLOAT_CONST ||
+             type_a == TOKEN_FLOAT) &&
+            (type_b == TOKEN_INTEGER ||
+             type_b == TOKEN_INTEGER_CONST ||
+             type_b == TOKEN_FLOAT_CONST ||
+             type_b == TOKEN_FLOAT))
+        {
+            return true;
+        }
+    }
+
+    if (!strcmp(operator, "="))
+        if (type_a == TOKEN_INTEGER)
+        {
+            if (type_b == TOKEN_INTEGER || type_b == TOKEN_INTEGER_CONST)
+            {
+                return true;
+            }
+        }
+    if (type_a == TOKEN_FLOAT)
+    {
+        if (type_b == TOKEN_FLOAT || type_b == TOKEN_FLOAT_CONST
+           || type_b == TOKEN_INTEGER || type_b == TOKEN_INTEGER_CONST)
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+static LinkedList *extractTokens(HashTable *ht, LinkedList *identifiers, char *operator)
+{
+    if (operator!= NULL)
+    {
+        HashTableItem *item = ht_search(ht, operator);
+        if (item)
+        {
+            insertFirst(identifiers, item->key);
+            return identifiers;
+        }
+        else
+        {
+            insertFirst(identifiers, operator);
+            return identifiers;
+        }
+    }
+    HashTableItem *item = ht_search(ht, token);
+    if (!item)
+    {
+        error("variable not declared");
+    }
+    insertFirst(identifiers, item->key);
+    return identifiers;
+}
+
+static LinkedList *typingIdentifiers(HashTable *ht, LinkedList *identifiers, int identifier_type)
+{
+    node *ptr = identifiers->head;
+    do
+    {
+        if (ptr->data != NULL)
+        {
             ht_insert(ht,
                       ptr->data,
                       TOKEN_IDENTIFIER,
@@ -739,7 +1022,7 @@ static words(HashTable
     ht_insert(ht,
               "char", TOKEN_CHARACTER, TOKEN_CHARACTER);
     ht_insert(ht,
-              "if", TOKEN_IF,TOKEN_IF);
+              "if", TOKEN_IF, TOKEN_IF);
     ht_insert(ht,
               "then", TOKEN_THEN, TOKEN_THEN);
     ht_insert(ht,

@@ -6,6 +6,7 @@
 typedef char* ht_key_t;
 typedef int ht_type_t;
 typedef int ht_value_t;
+typedef char* ht_value_of;
 
 // key => value plus pointer to next item for hash collisions
 typedef struct HashTableItem HashTableItem;
@@ -13,6 +14,7 @@ struct HashTableItem {
   ht_key_t       key;
   ht_value_t     value;
   ht_type_t      type;
+  ht_value_of    value_of;
   HashTableItem* next;
 };
 
@@ -29,6 +31,7 @@ HashTableItem* ht_create_item(ht_key_t key, ht_value_t value, ht_type_t type) {
   item->key           = strdup(key);
   item->value         = value;
   item->type          = type;
+  item->type          = NULL;
   item->next          = NULL;
   return item;
 }
@@ -99,6 +102,19 @@ void ht_update(HashTable* table, ht_key_t key, ht_type_t type) {
     }
 }
 
+void ht_insert_value(HashTable* table, ht_key_t key, ht_value_of value_of) {
+    HashTableItem** slot = &table->items[hash_function(table, key)];
+    HashTableItem*  item = *slot;
+    while (item) {
+        if (strcmp(item->key, key) == 0) {
+            item->value_of = value_of;
+            return;
+        }
+        slot = &item->next;
+        item = *slot;
+    }
+}
+
 // Deletes an item from the table
 void ht_delete(HashTable* table, ht_key_t key) {
   HashTableItem** slot = &table->items[hash_function(table, key)];
@@ -135,7 +151,7 @@ void ht_print(HashTable* table) {
     printf("@%zu: ", i);
     HashTableItem* item = table->items[i];
     while (item) {
-      printf("%s => %d : %d | ", item->key, item->value, item->type);
+      printf("%s => %d : %d  - %s| ", item->key, item->value, item->type, item->value_of);
       item = item->next;
     }
     printf("\n");

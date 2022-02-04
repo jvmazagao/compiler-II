@@ -68,5 +68,5 @@ struct node* deleteFirst(LinkedList* list) {
 }
 
 bool isEmpty(LinkedList *list) {
-    return list->head == NULL;
+    return list->head->data == NULL;
 }
